@@ -1,0 +1,218 @@
+[
+  {
+    "year": 1,
+    "courses": [
+      {
+        "id": "y1-alchimie",
+        "name": "Alchimie - Botanique",
+        "currentPoints": 30,
+        "requiredPoints": 30,
+        "icon": "\uD83C\uDF3F"
+      },
+      {
+        "id": "y1-sorts",
+        "name": "Sorts",
+        "currentPoints": 40,
+        "requiredPoints": 40,
+        "icon": "✨"
+      },
+      {
+        "id": "y1-potions",
+        "name": "Potions",
+        "currentPoints": 20,
+        "requiredPoints": 20,
+        "icon": "\uD83E\uDDEA"
+      },
+      {
+        "id": "y1-histoire",
+        "name": "Histoire de la Magie",
+        "currentPoints": 20,
+        "requiredPoints": 20,
+        "icon": "\uD83D\uDCDC"
+      },
+      {
+        "id": "y1-creatures",
+        "name": "Créatures Magiques",
+        "currentPoints": 20,
+        "requiredPoints": 20,
+        "icon": "\uD83D\uDC09"
+      },
+      {
+        "id": "y1-club",
+        "name": "Club",
+        "currentPoints": 10,
+        "requiredPoints": 10,
+        "icon": "\uD83C\uDFC6"
+      },
+      {
+        "id": "y1-divers",
+        "name": "Divers",
+        "currentPoints": 40,
+        "requiredPoints": 40,
+        "icon": "⚡"
+      }
+    ]
+  },
+  {
+    "year": 2,
+    "courses": [
+      {
+        "id": "y2-alchimie",
+        "name": "Alchimie - Botanique",
+        "currentPoints": 23,
+        "requiredPoints": 20,
+        "icon": "\uD83C\uDF3F"
+      },
+      {
+        "id": "y2-sorts",
+        "name": "Sorts",
+        "currentPoints": 41,
+        "requiredPoints": 40,
+        "icon": "✨"
+      },
+      {
+        "id": "y2-potions",
+        "name": "Potions",
+        "currentPoints": 18,
+        "requiredPoints": 15,
+        "icon": "\uD83E\uDDEA"
+      },
+      {
+        "id": "y2-histoire",
+        "name": "Histoire de la Magie",
+        "currentPoints": 34,
+        "requiredPoints": 30,
+        "icon": "\uD83D\uDCDC"
+      },
+      {
+        "id": "y2-creatures",
+        "name": "Créatures Magiques",
+        "currentPoints": 26,
+        "requiredPoints": 25,
+        "icon": "\uD83D\uDC09"
+      },
+      {
+        "id": "y2-club",
+        "name": "Club",
+        "currentPoints": 24,
+        "requiredPoints": 20,
+        "icon": "\uD83C\uDFC6"
+      },
+      {
+        "id": "y2-divers",
+        "name": "Divers",
+        "currentPoints": 50,
+        "requiredPoints": 50,
+        "icon": "⚡"
+      }
+    ]
+  },
+  {
+    "year": 3,
+    "courses": [
+      {
+        "id": "y3-alchimie",
+        "name": "Alchimie - Botanique",
+        "currentPoints": 30,
+        "requiredPoints": 30,
+        "icon": "\uD83C\uDF3F"
+      },
+      {
+        "id": "y3-sorts",
+        "name": "Sorts",
+        "currentPoints": 34,
+        "requiredPoints": 20,
+        "icon": "✨"
+      },
+      {
+        "id": "y3-potions",
+        "name": "Potions",
+        "currentPoints": 16,
+        "requiredPoints": 15,
+        "icon": "\uD83E\uDDEA"
+      },
+      {
+        "id": "y3-histoire",
+        "name": "Histoire de la Magie",
+        "currentPoints": 40,
+        "requiredPoints": 40,
+        "icon": "\uD83D\uDCDC"
+      },
+      {
+        "id": "y3-creatures",
+        "name": "Créatures Magiques",
+        "currentPoints": 36,
+        "requiredPoints": 35,
+        "icon": "\uD83D\uDC09"
+      },
+      {
+        "id": "y3-club",
+        "name": "Club",
+        "currentPoints": 30,
+        "requiredPoints": 25,
+        "icon": "\uD83C\uDFC6"
+      },
+      {
+        "id": "y3-divers",
+        "name": "Divers",
+        "currentPoints": 38,
+        "requiredPoints": 35,
+        "icon": "⚡"
+      }
+    ]
+  },
+  {
+    "year": 4,
+    "courses": [
+      {
+        "id": "y4-alchimie",
+        "name": "Alchimie - Botanique",
+        "currentPoints": 8,
+        "requiredPoints": 30,
+        "icon": "\uD83C\uDF3F"
+      },
+      {
+        "id": "y4-sorts",
+        "name": "Sorts",
+        "currentPoints": 16,
+        "requiredPoints": 20,
+        "icon": "✨"
+      },
+      {
+        "id": "y4-potions",
+        "name": "Potions",
+        "currentPoints": 6,
+        "requiredPoints": 15,
+        "icon": "\uD83E\uDDEA"
+      },
+      {
+        "id": "y4-histoire",
+        "name": "Histoire de la Magie",
+        "currentPoints": 10,
+        "requiredPoints": 40,
+        "icon": "\uD83D\uDCDC"
+      },
+      {
+        "id": "y4-creatures",
+        "name": "Créatures Magiques",
+        "currentPoints": 8,
+        "requiredPoints": 35,
+        "icon": "\uD83D\uDC09"
+      },
+      {
+        "id": "y4-club",
+        "name": "Club",
+        "currentPoints": 4,
+        "requiredPoints": 25,
+        "icon": "\uD83C\uDFC6"
+      },
+      {
+        "id": "y4-divers",
+        "name": "Divers",
+        "currentPoints": 18,
+        "requiredPoints": 35,
+        "icon": "⚡"
+      }
+    ]
+  }
+]

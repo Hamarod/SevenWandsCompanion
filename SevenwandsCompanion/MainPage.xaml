@@ -1,0 +1,245 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="SevenwandsCompanion.MainPage"
+             BackgroundColor="{StaticResource BackgroundDark}">
+
+    <Grid Padding="20" RowDefinitions="Auto, *" RowSpacing="20">
+
+        <!-- En-tête -->
+        <VerticalStackLayout Grid.Row="0" Spacing="5">
+            <Label Text="⚗️ CRÉATEUR DE POTIONS" 
+                   Style="{StaticResource TitleStyle}" 
+                   HorizontalOptions="Start"/>
+            <Label Text="Calculez les coûts et bénéfices de vos potions magiques" 
+                   FontSize="14" 
+                   TextColor="{StaticResource TextSecondary}"/>
+        </VerticalStackLayout>
+
+        <!-- Contenu principal - prend tout l'espace restant -->
+        <Grid Grid.Row="1" ColumnDefinitions="*, *, *" ColumnSpacing="15">
+
+            <!-- Colonne 1 : Liste Potions -->
+            <Grid Grid.Column="0" RowDefinitions="Auto, Auto, Auto, *" RowSpacing="10">
+                <Label Grid.Row="0" 
+                       Text="🧪 LISTE POTIONS" 
+                       Style="{StaticResource SectionTitleStyle}" />
+
+                <!-- Boutons d'action -->
+                <Grid Grid.Row="1" ColumnDefinitions="*, *" ColumnSpacing="10">
+                    <Button Grid.Column="0"
+                            Text="➕ Nouvelle"
+                            FontSize="12"
+                            BackgroundColor="{StaticResource AccentGreen}"
+                            TextColor="White"
+                            CornerRadius="6"
+                            Padding="10,8"
+                            Clicked="OnCreatePotionClicked"/>
+                    <Button Grid.Column="1"
+                            Text="✏️ Modifier"
+                            FontSize="12"
+                            BackgroundColor="{StaticResource AccentOrange}"
+                            TextColor="White"
+                            CornerRadius="6"
+                            Padding="10,8"
+                            Clicked="OnEditPotionClicked"
+                            IsEnabled="{Binding SelectedPotion, Converter={StaticResource IsNotNullConverter}}"/>
+                </Grid>
+
+                <!-- Barre de recherche -->
+                <Border Grid.Row="2" 
+                        Style="{StaticResource CardStyle}"
+                        Padding="10,8">
+                    <Grid ColumnDefinitions="Auto, *">
+                        <Label Text="🔍" 
+                               FontSize="18"
+                               VerticalOptions="Center"
+                               Margin="5,0"/>
+                        <SearchBar Grid.Column="1"
+                                   Placeholder="Rechercher une potion..."
+                                   PlaceholderColor="{StaticResource TextSecondary}"
+                                   TextColor="{StaticResource TextPrimary}"
+                                   BackgroundColor="Transparent"
+                                   TextChanged="OnSearchTextChanged"
+                                   SearchCommand="{Binding SearchCommand}"
+                                   SearchCommandParameter="{Binding Source={RelativeSource Self}, Path=Text}"
+                                   VerticalOptions="Center"
+                                   Margin="0"/>
+                    </Grid>
+                </Border>
+
+                <Border Grid.Row="3" Style="{StaticResource CardStyle}">
+                    <CollectionView ItemsSource="{Binding FilteredPotions}"
+                                SelectionMode="Single"
+                                SelectedItem="{Binding SelectedPotion}">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Padding="12,10">
+                                    <VisualStateManager.VisualStateGroups>
+                                        <VisualStateGroup Name="CommonStates">
+                                            <VisualState Name="Normal">
+                                                <VisualState.Setters>
+                                                    <Setter Property="BackgroundColor" Value="Transparent" />
+                                                </VisualState.Setters>
+                                            </VisualState>
+                                            <VisualState Name="Selected">
+                                                <VisualState.Setters>
+                                                    <Setter Property="BackgroundColor" Value="{StaticResource ButtonBackground}" />
+                                                </VisualState.Setters>
+                                            </VisualState>
+                                        </VisualStateGroup>
+                                    </VisualStateManager.VisualStateGroups>
+                                    <Label Text="{Binding Name}" 
+                                           TextColor="{StaticResource TextPrimary}" 
+                                           VerticalOptions="Center"
+                                           FontSize="14" />
+                                </Grid>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </Border>
+            </Grid>
+
+            <!-- Colonne 2 : Ingrédients -->
+            <Grid Grid.Column="1" RowDefinitions="Auto, Auto, *, Auto" RowSpacing="10">
+                <Label Grid.Row="0" 
+                       Text="🌿 INGRÉDIENTS" 
+                       Style="{StaticResource SectionTitleStyle}" />
+
+                <!-- Champ Quantité -->
+                <Border Grid.Row="1" 
+                        Style="{StaticResource CardStyle}"
+                        Padding="15">
+                    <Grid ColumnDefinitions="Auto, *">
+                        <Label Text="Quantité:" 
+                               VerticalOptions="Center" 
+                               TextColor="{StaticResource TextSecondary}"
+                               FontSize="14"/>
+                        <Entry Grid.Column="1" 
+                               Text="{Binding NumberOfPotions}" 
+                               Keyboard="Numeric" 
+                               Margin="15,0,0,0" 
+                               Style="{StaticResource EntryStyle}"
+                               FontSize="16"/>
+                    </Grid>
+                </Border>
+
+                <!-- Liste des ingrédients - s'adapte à l'espace disponible -->
+                <Border Grid.Row="2" Style="{StaticResource CardStyle}">
+                    <CollectionView ItemsSource="{Binding IngredientsAffiches}">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <Label Text="{Binding Name}" 
+                                       TextColor="{StaticResource TextPrimary}" 
+                                       Padding="12,10"
+                                       FontSize="14" />
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </Border>
+
+                <!-- Coût - toujours visible en bas -->
+                <Border Grid.Row="3" 
+                        Style="{StaticResource CardStyle}"
+                        Padding="15">
+                    <Grid RowDefinitions="Auto, Auto" RowSpacing="5">
+                        <Label Grid.Row="0"
+                               Text="💰 Coût Total" 
+                               TextColor="{StaticResource TextSecondary}" 
+                               FontSize="12"/>
+                        <Label Grid.Row="1"
+                               Text="{Binding DisplayedCost, StringFormat='{0} Gallyons'}" 
+                               TextColor="{StaticResource AccentOrange}" 
+                               FontAttributes="Bold"
+                               FontSize="20" />
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <!-- COLONNE 3 : Recette & Résultats -->
+            <Grid Grid.Column="2" RowDefinitions="Auto, *, Auto" RowSpacing="10">
+                <Label Grid.Row="0" 
+                       Text="📜 RECETTE &amp; RÉSULTATS" 
+                       Style="{StaticResource SectionTitleStyle}" />
+
+                <!-- Liste de la recette - s'adapte à l'espace disponible -->
+                <Border Grid.Row="1" Style="{StaticResource CardStyle}">
+                    <CollectionView ItemsSource="{Binding RecetteAffiches}">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <Label Text="{Binding Name}" 
+                                       TextColor="{StaticResource TextPrimary}" 
+                                       Padding="12,10"
+                                       FontSize="14" />
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </Border>
+
+                <!-- Résultats - toujours visibles en bas -->
+                <Border Grid.Row="2" 
+                        Style="{StaticResource CardStyle}"
+                        Padding="15">
+                    <Grid RowDefinitions="Auto, Auto, Auto, Auto, Auto, Auto" RowSpacing="10">
+                        <!-- Vente Totale -->
+                        <Grid Grid.Row="0" ColumnDefinitions="Auto, *">
+                            <Label Text="💵" 
+                                   FontSize="16"
+                                   VerticalOptions="Center"/>
+                            <Label Grid.Column="1"
+                                   Text="Vente totale" 
+                                   TextColor="{StaticResource TextSecondary}" 
+                                   FontSize="12"
+                                   Margin="8,0,0,0"
+                                   VerticalOptions="Center"/>
+                        </Grid>
+                        <Label Grid.Row="1"
+                               Text="{Binding DisplayedSellPrice, StringFormat='{0} Gallyons'}" 
+                               TextColor="{StaticResource TextPrimary}" 
+                               FontAttributes="Bold" 
+                               FontSize="16"
+                               Margin="24,0,0,0"/>
+
+                        <!-- Bénéfice -->
+                        <Grid Grid.Row="2" ColumnDefinitions="Auto, *" Margin="0,5,0,0">
+                            <Label Text="📈" 
+                                   FontSize="16"
+                                   VerticalOptions="Center"/>
+                            <Label Grid.Column="1"
+                                   Text="Bénéfice" 
+                                   TextColor="{StaticResource TextSecondary}" 
+                                   FontSize="12"
+                                   Margin="8,0,0,0"
+                                   VerticalOptions="Center"/>
+                        </Grid>
+                        <Label Grid.Row="3"
+                               Text="{Binding DisplayedBenefits, StringFormat='{0} Gallyons'}" 
+                               TextColor="{StaticResource AccentGreen}" 
+                               FontAttributes="Bold" 
+                               FontSize="16"
+                               Margin="24,0,0,0"/>
+
+                        <!-- Expérience -->
+                        <Grid Grid.Row="4" ColumnDefinitions="Auto, *" Margin="0,5,0,0">
+                            <Label Text="⭐" 
+                                   FontSize="16"
+                                   VerticalOptions="Center"/>
+                            <Label Grid.Column="1"
+                                   Text="Expérience" 
+                                   TextColor="{StaticResource TextSecondary}" 
+                                   FontSize="12"
+                                   Margin="8,0,0,0"
+                                   VerticalOptions="Center"/>
+                        </Grid>
+                        <Label Grid.Row="5"
+                               Text="{Binding DisplayedExperience, StringFormat='{0} XP'}" 
+                               TextColor="{StaticResource AccentBlue}" 
+                               FontAttributes="Bold" 
+                               FontSize="16"
+                               Margin="24,0,0,0"/>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Grid>
+    </Grid>
+</ContentPage>

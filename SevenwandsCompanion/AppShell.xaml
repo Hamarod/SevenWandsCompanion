@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Shell
+    x:Class="SevenwandsCompanion.AppShell"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:local="clr-namespace:SevenwandsCompanion"
+    Title="Sevenwands Companion"
+    FlyoutBehavior="Flyout"
+    FlyoutWidth="280"
+    FlyoutBackgroundColor="#1A1D29">
+
+    <!-- Style du Flyout -->
+    <Shell.FlyoutHeaderTemplate>
+        <DataTemplate>
+            <Grid BackgroundColor="#1A1D29" Padding="20" HeightRequest="120">
+                <VerticalStackLayout VerticalOptions="Center">
+                    <Label Text="⚗️ SEVENWANDS" 
+                           FontSize="22" 
+                           FontAttributes="Bold" 
+                           TextColor="#D4AF37"
+                           HorizontalOptions="Start"/>
+                    <Label Text="Outils Magiques" 
+                           FontSize="14" 
+                           TextColor="#8B8B8B"
+                           Margin="0,5,0,0"/>
+                </VerticalStackLayout>
+            </Grid>
+        </DataTemplate>
+    </Shell.FlyoutHeaderTemplate>
+
+    <!-- Style pour les items du menu -->
+    <Shell.Resources>
+        <Style x:Key="FlyoutItemStyle" TargetType="Grid">
+            <Setter Property="BackgroundColor" Value="Transparent"/>
+            <Setter Property="VisualStateManager.VisualStateGroups">
+                <VisualStateGroupList>
+                    <VisualStateGroup x:Name="CommonStates">
+                        <VisualState x:Name="Normal">
+                            <VisualState.Setters>
+                                <Setter Property="BackgroundColor" Value="Transparent"/>
+                            </VisualState.Setters>
+                        </VisualState>
+                        <VisualState x:Name="Selected">
+                            <VisualState.Setters>
+                                <Setter Property="BackgroundColor" Value="#2D3142"/>
+                            </VisualState.Setters>
+                        </VisualState>
+                    </VisualStateGroup>
+                </VisualStateGroupList>
+            </Setter>
+        </Style>
+    </Shell.Resources>
+
+    <!-- Items de navigation -->
+    <FlyoutItem Title="Suivi des Jetons">
+        <ShellContent
+                      ContentTemplate="{DataTemplate local:TokenTrackingPage}"
+                      Route="TokenTrackingPage"
+                      Shell.NavBarIsVisible="False">
+            <ShellContent.Icon>
+                <FontImageSource Glyph="📊" 
+                                 FontFamily="Segoe UI Emoji" 
+                                 Color="#D4AF37"
+                                 Size="24"/>
+            </ShellContent.Icon>
+        </ShellContent>
+    </FlyoutItem>
+
+    <FlyoutItem Title="Potions">
+        <ShellContent
+                      ContentTemplate="{DataTemplate local:MainPage}"
+                      Route="MainPage"
+                      Shell.NavBarIsVisible="False">
+            <ShellContent.Icon>
+                <FontImageSource Glyph="🧪" 
+                                 FontFamily="Segoe UI Emoji" 
+                                 Color="#D4AF37"
+                                 Size="24"/>
+            </ShellContent.Icon>
+        </ShellContent>
+    </FlyoutItem>
+
+    <!-- Template personnalisé pour les items -->
+    <Shell.ItemTemplate>
+        <DataTemplate>
+            <Grid Padding="15,12" 
+                  ColumnDefinitions="Auto, *" 
+                  ColumnSpacing="12"
+                  Style="{StaticResource FlyoutItemStyle}">
+                <Image Grid.Column="0" 
+                       Source="{Binding FlyoutIcon}" 
+                       WidthRequest="28" 
+                       HeightRequest="28"
+                       VerticalOptions="Center"
+                       HorizontalOptions="Start"/>
+                <Label Grid.Column="1" 
+                       Text="{Binding Title}" 
+                       TextColor="White"
+                       FontSize="16"
+                       FontAttributes="None"
+                       VerticalOptions="Center"/>
+            </Grid>
+        </DataTemplate>
+    </Shell.ItemTemplate>
+
+    <!-- Style pour le menu item template -->
+    <Shell.MenuItemTemplate>
+        <DataTemplate>
+            <Grid Padding="15,12" 
+                  ColumnDefinitions="Auto, *" 
+                  ColumnSpacing="12">
+                <Image Grid.Column="0" 
+                       Source="{Binding Icon}" 
+                       WidthRequest="28" 
+                       HeightRequest="28"
+                       VerticalOptions="Center"/>
+                <Label Grid.Column="1" 
+                       Text="{Binding Text}" 
+                       TextColor="White"
+                       FontSize="16"
+                       VerticalOptions="Center"/>
+            </Grid>
+        </DataTemplate>
+    </Shell.MenuItemTemplate>
+
+</Shell>

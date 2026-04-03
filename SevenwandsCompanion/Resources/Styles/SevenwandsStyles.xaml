@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ResourceDictionary 
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!-- SEVENWANDS - DIRECTION ARTISTIQUE GLOBALE                    -->
+    <!-- ═══════════════════════════════════════════════════════════ -->
+
+    <!-- COULEURS PRINCIPALES -->
+    <Color x:Key="BackgroundDark">#1A1D29</Color>
+    <Color x:Key="BackgroundCard">#252836</Color>
+    <Color x:Key="BorderColor">#2D3142</Color>
+    
+    <!-- COULEURS DE TEXTE -->
+    <Color x:Key="TextPrimary">White</Color>
+    <Color x:Key="TextSecondary">#8B8B8B</Color>
+    <Color x:Key="TextAccent">#D4AF37</Color>
+    
+    <!-- COULEURS D'ACCENT -->
+    <Color x:Key="AccentGold">#D4AF37</Color>
+    <Color x:Key="AccentOrange">#FFA500</Color>
+    <Color x:Key="AccentGreen">#4CAF50</Color>
+    <Color x:Key="AccentBlue">#2196F3</Color>
+    <Color x:Key="AccentRed">#F44336</Color>
+    
+    <!-- COULEURS DE BOUTONS -->
+    <Color x:Key="ButtonBackground">#2D3142</Color>
+    <Color x:Key="ButtonBackgroundHover">#3D4152</Color>
+    <Color x:Key="ButtonText">White</Color>
+    
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!-- STYLES DE BASE                                               -->
+    <!-- ═══════════════════════════════════════════════════════════ -->
+
+    <!-- Style pour les titres principaux -->
+    <Style x:Key="TitleStyle" TargetType="Label">
+        <Setter Property="FontSize" Value="24"/>
+        <Setter Property="FontAttributes" Value="Bold"/>
+        <Setter Property="TextColor" Value="{StaticResource AccentGold}"/>
+    </Style>
+
+    <!-- Style pour les titres de section -->
+    <Style x:Key="SectionTitleStyle" TargetType="Label">
+        <Setter Property="FontSize" Value="16"/>
+        <Setter Property="FontAttributes" Value="Bold"/>
+        <Setter Property="TextColor" Value="{StaticResource AccentGold}"/>
+    </Style>
+
+    <!-- Style pour les textes secondaires -->
+    <Style x:Key="SubtitleStyle" TargetType="Label">
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="TextColor" Value="{StaticResource TextSecondary}"/>
+    </Style>
+
+    <!-- Style pour les cartes/borders -->
+    <Style x:Key="CardStyle" TargetType="Border">
+        <Setter Property="StrokeThickness" Value="1"/>
+        <Setter Property="Stroke" Value="{StaticResource BorderColor}"/>
+        <Setter Property="BackgroundColor" Value="{StaticResource BackgroundCard}"/>
+        <Setter Property="StrokeShape" Value="RoundRectangle 8"/>
+    </Style>
+
+    <!-- Style pour les boutons principaux -->
+    <Style x:Key="PrimaryButtonStyle" TargetType="Button">
+        <Setter Property="BackgroundColor" Value="{StaticResource ButtonBackground}"/>
+        <Setter Property="TextColor" Value="{StaticResource ButtonText}"/>
+        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="Padding" Value="20,10"/>
+        <Setter Property="FontAttributes" Value="Bold"/>
+    </Style>
+
+    <!-- Style pour les petits boutons d'action -->
+    <Style x:Key="SmallButtonStyle" TargetType="Button">
+        <Setter Property="BackgroundColor" Value="{StaticResource ButtonBackground}"/>
+        <Setter Property="TextColor" Value="{StaticResource ButtonText}"/>
+        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="WidthRequest" Value="40"/>
+        <Setter Property="HeightRequest" Value="40"/>
+    </Style>
+
+    <!-- Style pour les barres de progression -->
+    <Style x:Key="ProgressStyle" TargetType="ProgressBar">
+        <Setter Property="ProgressColor" Value="{StaticResource AccentOrange}"/>
+        <Setter Property="BackgroundColor" Value="{StaticResource BorderColor}"/>
+        <Setter Property="HeightRequest" Value="6"/>
+    </Style>
+
+    <!-- Style pour les entrées de texte -->
+    <Style x:Key="EntryStyle" TargetType="Entry">
+        <Setter Property="TextColor" Value="{StaticResource TextPrimary}"/>
+        <Setter Property="BackgroundColor" Value="{StaticResource BackgroundCard}"/>
+        <Setter Property="PlaceholderColor" Value="{StaticResource TextSecondary}"/>
+    </Style>
+
+    <!-- Style pour les Picker -->
+    <Style x:Key="PickerStyle" TargetType="Picker">
+        <Setter Property="TextColor" Value="{StaticResource TextPrimary}"/>
+        <Setter Property="TitleColor" Value="{StaticResource AccentGold}"/>
+        <Setter Property="BackgroundColor" Value="{StaticResource BackgroundCard}"/>
+    </Style>
+
+    <!-- Style pour les labels de valeur (prix, stats, etc.) -->
+    <Style x:Key="ValueLabelStyle" TargetType="Label">
+        <Setter Property="FontSize" Value="28"/>
+        <Setter Property="FontAttributes" Value="Bold"/>
+        <Setter Property="TextColor" Value="{StaticResource TextPrimary}"/>
+        <Setter Property="HorizontalOptions" Value="Center"/>
+    </Style>
+
+    <!-- Style pour les icônes -->
+    <Style x:Key="IconStyle" TargetType="Label">
+        <Setter Property="FontSize" Value="24"/>
+        <Setter Property="HorizontalOptions" Value="Center"/>
+    </Style>
+
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!-- STYLES POUR COLLECTIONVIEW                                   -->
+    <!-- ═══════════════════════════════════════════════════════════ -->
+
+    <!-- Style pour les items sélectionnés -->
+    <Style x:Key="ListItemStyle" TargetType="Grid">
+        <Setter Property="BackgroundColor" Value="Transparent"/>
+        <Setter Property="Padding" Value="10"/>
+    </Style>
+
+</ResourceDictionary>

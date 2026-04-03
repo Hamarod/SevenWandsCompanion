@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="SevenwandsCompanion.IngredientEditorPage"
+             Title="Gestion des Ingrédients"
+             BackgroundColor="{StaticResource BackgroundDark}">
+
+    <Grid Padding="20" RowDefinitions="Auto, *" RowSpacing="20">
+
+        <!-- En-tête -->
+        <Grid Grid.Row="0" ColumnDefinitions="*, Auto">
+            <VerticalStackLayout Grid.Column="0" Spacing="5">
+                <Label Text="🌿 GESTION DES INGRÉDIENTS" 
+                       Style="{StaticResource TitleStyle}" 
+                       HorizontalOptions="Start"/>
+                <Label Text="Créez et modifiez vos ingrédients magiques" 
+                       FontSize="14" 
+                       TextColor="{StaticResource TextSecondary}"/>
+            </VerticalStackLayout>
+
+            <!-- Bouton Retour -->
+            <Button Grid.Column="1"
+                    Text="← Retour"
+                    FontSize="14"
+                    BackgroundColor="{StaticResource ButtonBackground}"
+                    TextColor="{StaticResource TextPrimary}"
+                    CornerRadius="8"
+                    Padding="20,10"
+                    Clicked="OnBackClicked"
+                    VerticalOptions="Center"/>
+        </Grid>
+
+        <!-- Contenu principal -->
+        <Grid Grid.Row="1" ColumnDefinitions="*, *" ColumnSpacing="20">
+
+            <!-- Colonne 1 : Liste des ingrédients -->
+            <Grid Grid.Column="0" RowDefinitions="Auto, Auto, Auto, *" RowSpacing="10">
+                <Label Grid.Row="0" 
+                       Text="📋 LISTE DES INGRÉDIENTS" 
+                       Style="{StaticResource SectionTitleStyle}"/>
+
+                <!-- Bouton Nouveau -->
+                <Button Grid.Row="1"
+                        Text="➕ Nouvel Ingrédient"
+                        FontSize="14"
+                        BackgroundColor="{StaticResource AccentGreen}"
+                        TextColor="White"
+                        CornerRadius="8"
+                        Padding="15,10"
+                        Clicked="OnNewIngredientClicked"/>
+
+                <!-- Barre de recherche -->
+                <Border Grid.Row="2" 
+                        Style="{StaticResource CardStyle}"
+                        Padding="10,8">
+                    <Grid ColumnDefinitions="Auto, *">
+                        <Label Text="🔍" 
+                               FontSize="18"
+                               VerticalOptions="Center"
+                               Margin="5,0"/>
+                        <SearchBar Grid.Column="1"
+                                   Placeholder="Rechercher un ingrédient..."
+                                   PlaceholderColor="{StaticResource TextSecondary}"
+                                   TextColor="{StaticResource TextPrimary}"
+                                   BackgroundColor="Transparent"
+                                   TextChanged="OnSearchTextChanged"
+                                   VerticalOptions="Center"
+                                   Margin="0"/>
+                    </Grid>
+                </Border>
+
+                <!-- Liste scrollable -->
+                <Border Grid.Row="3" Style="{StaticResource CardStyle}">
+                    <CollectionView ItemsSource="{Binding FilteredIngredients}"
+                                    SelectionMode="Single"
+                                    SelectedItem="{Binding SelectedIngredient}">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Padding="12,10">
+                                    <VisualStateManager.VisualStateGroups>
+                                        <VisualStateGroup Name="CommonStates">
+                                            <VisualState Name="Normal">
+                                                <VisualState.Setters>
+                                                    <Setter Property="BackgroundColor" Value="Transparent" />
+                                                </VisualState.Setters>
+                                            </VisualState>
+                                            <VisualState Name="Selected">
+                                                <VisualState.Setters>
+                                                    <Setter Property="BackgroundColor" Value="{StaticResource ButtonBackground}" />
+                                                </VisualState.Setters>
+                                            </VisualState>
+                                        </VisualStateGroup>
+                                    </VisualStateManager.VisualStateGroups>
+                                    <VerticalStackLayout Spacing="3">
+                                        <Label Text="{Binding Name}" 
+                                               TextColor="{StaticResource TextPrimary}" 
+                                               FontSize="14"
+                                               FontAttributes="Bold"/>
+                                        <Label Text="{Binding TypeDisplay}" 
+                                               TextColor="{StaticResource TextSecondary}" 
+                                               FontSize="11"/>
+                                    </VerticalStackLayout>
+                                </Grid>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </Border>
+            </Grid>
+
+            <!-- Colonne 2 : Formulaire d'édition -->
+            <ScrollView Grid.Column="1">
+                <VerticalStackLayout Spacing="20">
+
+                    <Label Text="{Binding FormTitle}" 
+                           Style="{StaticResource SectionTitleStyle}"/>
+
+                    <!-- Formulaire -->
+                    <Border Style="{StaticResource CardStyle}" Padding="20">
+                        <VerticalStackLayout Spacing="15">
+
+                            <!-- Nom -->
+                            <VerticalStackLayout Spacing="5">
+                                <Label Text="Nom de l'ingrédient *" 
+                                       TextColor="{StaticResource TextSecondary}" 
+                                       FontSize="12"/>
+                                <Entry Text="{Binding EditedIngredient.Name}" 
+                                       Style="{StaticResource EntryStyle}"
+                                       Placeholder="Ex: Fleur de Silmera"/>
+                            </VerticalStackLayout>
+
+                            <!-- Description -->
+                            <VerticalStackLayout Spacing="5">
+                                <Label Text="Description" 
+                                       TextColor="{StaticResource TextSecondary}" 
+                                       FontSize="12"/>
+                                <Editor Text="{Binding EditedIngredient.Description}" 
+                                        TextColor="{StaticResource TextPrimary}"
+                                        BackgroundColor="{StaticResource BackgroundCard}"
+                                        Placeholder="Décrivez l'ingrédient..."
+                                        HeightRequest="80"
+                                        AutoSize="TextChanges"/>
+                            </VerticalStackLayout>
+
+                            <!-- Type -->
+                            <VerticalStackLayout Spacing="5">
+                                <Label Text="Type *" 
+                                       TextColor="{StaticResource TextSecondary}" 
+                                       FontSize="12"/>
+                                <Picker ItemsSource="{Binding IngredientTypes}"
+                                        SelectedItem="{Binding EditedIngredient.Type}"
+                                        Style="{StaticResource PickerStyle}"/>
+                                <Label Text="Fire: Intensité du feu | ingredent: Ingrédient physique | rotate: Sens de rotation | spell: Formule" 
+                                       TextColor="{StaticResource TextSecondary}" 
+                                       FontSize="10"
+                                       Margin="0,5,0,0"/>
+                            </VerticalStackLayout>
+
+                            <!-- Prix (optionnel) -->
+                            <VerticalStackLayout Spacing="5">
+                                <Label Text="Prix (Gallyons) - Optionnel" 
+                                       TextColor="{StaticResource TextSecondary}" 
+                                       FontSize="12"/>
+                                <Entry Text="{Binding EditedIngredient.Price}" 
+                                       Keyboard="Numeric"
+                                       Style="{StaticResource EntryStyle}"
+                                       Placeholder="Laissez vide si non achetable"/>
+                            </VerticalStackLayout>
+
+                            <!-- Info ID -->
+                            <Label Text="{Binding IdInfo}" 
+                                   TextColor="{StaticResource AccentGold}" 
+                                   FontSize="11"
+                                   Margin="0,5,0,0"/>
+
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <!-- Boutons d'action -->
+                    <Grid ColumnDefinitions="*, *, *" ColumnSpacing="10">
+                        <Button Grid.Column="0"
+                                Text="🗑️ Supprimer"
+                                BackgroundColor="{StaticResource AccentRed}"
+                                TextColor="White"
+                                FontSize="14"
+                                FontAttributes="Bold"
+                                HeightRequest="45"
+                                CornerRadius="8"
+                                Clicked="OnDeleteClicked"
+                                IsVisible="{Binding IsEditMode}"/>
+
+                        <Button Grid.Column="1"
+                                Text="❌ Annuler"
+                                BackgroundColor="{StaticResource ButtonBackground}"
+                                TextColor="{StaticResource TextPrimary}"
+                                FontSize="14"
+                                FontAttributes="Bold"
+                                HeightRequest="45"
+                                CornerRadius="8"
+                                Clicked="OnCancelEditClicked"/>
+
+                        <Button Grid.Column="2"
+                                Text="💾 Enregistrer"
+                                BackgroundColor="{StaticResource AccentGreen}"
+                                TextColor="White"
+                                FontSize="14"
+                                FontAttributes="Bold"
+                                HeightRequest="45"
+                                CornerRadius="8"
+                                Clicked="OnSaveClicked"/>
+                    </Grid>
+
+                </VerticalStackLayout>
+            </ScrollView>
+
+        </Grid>
+    </Grid>
+</ContentPage>

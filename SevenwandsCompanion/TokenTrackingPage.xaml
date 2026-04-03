@@ -1,0 +1,262 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="SevenwandsCompanion.TokenTrackingPage"
+             BackgroundColor="{StaticResource BackgroundDark}">
+
+    <Grid Padding="20" RowDefinitions="Auto, Auto, Auto, *" RowSpacing="20">
+
+        <!-- En-tête -->
+        <Grid Grid.Row="0" ColumnDefinitions="*, Auto, Auto">
+            <VerticalStackLayout Grid.Column="0" Spacing="5">
+                <Label Text="SUIVI DES JETONS" 
+                       Style="{StaticResource TitleStyle}" 
+                       HorizontalOptions="Start"/>
+                <Label Text="Gérez votre progression académique" 
+                       FontSize="14" 
+                       TextColor="{StaticResource TextSecondary}"/>
+            </VerticalStackLayout>
+
+            <!-- Indicateur de sauvegarde -->
+            <HorizontalStackLayout Grid.Column="1" 
+                                   Spacing="5" 
+                                   VerticalOptions="Center"
+                                   Margin="0,0,10,0"
+                                   IsVisible="{Binding IsSaving}">
+                <ActivityIndicator IsRunning="{Binding IsSaving}"
+                                   Color="{StaticResource AccentGold}"
+                                   WidthRequest="20"
+                                   HeightRequest="20"/>
+                <Label Text="Sauvegarde..."
+                       FontSize="12"
+                       TextColor="{StaticResource AccentGold}"
+                       VerticalOptions="Center"/>
+            </HorizontalStackLayout>
+
+            <Button Grid.Column="2"
+                    Text="🔄"
+                    FontSize="20"
+                    WidthRequest="50"
+                    HeightRequest="50"
+                    BackgroundColor="{StaticResource ButtonBackground}"
+                    TextColor="{StaticResource AccentGold}"
+                    CornerRadius="25"
+                    Clicked="OnResetClicked"
+                    VerticalOptions="Center"
+                    ToolTipProperties.Text="Réinitialiser aux valeurs d'origine"/>
+        </Grid>
+
+        <!-- Sélecteur d'année -->
+        <Border Grid.Row="1" Style="{StaticResource CardStyle}" Padding="10">
+            <Picker ItemsSource="{Binding Years}"
+                    SelectedItem="{Binding SelectedYear}"
+                    ItemDisplayBinding="{Binding YearTitle}"
+                    Style="{StaticResource PickerStyle}"
+                    Title="Sélectionner une année"/>
+        </Border>
+
+        <!-- Statistiques générales -->
+        <Grid Grid.Row="2" 
+              ColumnDefinitions="*,*,*,*" 
+              ColumnSpacing="15">
+
+            <!-- Progression -->
+            <Border Grid.Column="0" Style="{StaticResource CardStyle}">
+                <Grid Padding="15" RowDefinitions="Auto, Auto">
+                    <Label Grid.Row="0" 
+                           Text="📊" 
+                           Style="{StaticResource IconStyle}"/>
+                    <VerticalStackLayout Grid.Row="1" Spacing="5" Margin="0,10,0,0">
+                        <Label Text="{Binding ProgressPercentage}" 
+                               Style="{StaticResource ValueLabelStyle}"/>
+                        <Label Text="Progression" 
+                               FontSize="12" 
+                               TextColor="{StaticResource TextSecondary}" 
+                               HorizontalOptions="Center"/>
+                    </VerticalStackLayout>
+                </Grid>
+            </Border>
+
+            <!-- Cours Complétés -->
+            <Border Grid.Column="1" Style="{StaticResource CardStyle}">
+                <Grid Padding="15" RowDefinitions="Auto, Auto">
+                    <Label Grid.Row="0" 
+                           Text="🏆" 
+                           Style="{StaticResource IconStyle}"/>
+                    <VerticalStackLayout Grid.Row="1" Spacing="5" Margin="0,10,0,0">
+                        <Label Text="{Binding CompletedCourses}" 
+                               Style="{StaticResource ValueLabelStyle}"/>
+                        <Label Text="Cours Complétés" 
+                               FontSize="12" 
+                               TextColor="{StaticResource TextSecondary}" 
+                               HorizontalOptions="Center"/>
+                    </VerticalStackLayout>
+                </Grid>
+            </Border>
+
+            <!-- Total Cours -->
+            <Border Grid.Column="2" Style="{StaticResource CardStyle}">
+                <Grid Padding="15" RowDefinitions="Auto, Auto">
+                    <Label Grid.Row="0" 
+                           Text="📚" 
+                           Style="{StaticResource IconStyle}"/>
+                    <VerticalStackLayout Grid.Row="1" Spacing="5" Margin="0,10,0,0">
+                        <Label Text="{Binding TotalCourses}" 
+                               Style="{StaticResource ValueLabelStyle}"/>
+                        <Label Text="Total Cours" 
+                               FontSize="12" 
+                               TextColor="{StaticResource TextSecondary}" 
+                               HorizontalOptions="Center"/>
+                    </VerticalStackLayout>
+                </Grid>
+            </Border>
+
+            <!-- Haute Priorité -->
+            <Border Grid.Column="3" Style="{StaticResource CardStyle}">
+                <Grid Padding="15" RowDefinitions="Auto, Auto">
+                    <Label Grid.Row="0" 
+                           Text="⚠️" 
+                           Style="{StaticResource IconStyle}"/>
+                    <VerticalStackLayout Grid.Row="1" Spacing="5" Margin="0,10,0,0">
+                        <Label Text="{Binding HighPriority}" 
+                               Style="{StaticResource ValueLabelStyle}"/>
+                        <Label Text="Haute Priorité" 
+                               FontSize="12" 
+                               TextColor="{StaticResource TextSecondary}" 
+                               HorizontalOptions="Center"/>
+                    </VerticalStackLayout>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- Grille des cours - Layout responsive -->
+        <ScrollView Grid.Row="3">
+            <VerticalStackLayout Spacing="20">
+
+                <!-- En-tête de la section -->
+                <Grid ColumnDefinitions="Auto, *" Margin="0,0,0,10">
+                    <Label Text="{Binding SelectedYear.YearTitle}" 
+                           FontSize="18" 
+                           FontAttributes="Bold" 
+                           TextColor="{StaticResource AccentGold}"/>
+                    <Label Grid.Column="1" 
+                           Text="{Binding SelectedYear.TotalProgressText}" 
+                           FontSize="16" 
+                           TextColor="{StaticResource TextPrimary}" 
+                           HorizontalOptions="End"
+                           VerticalOptions="Center"/>
+                </Grid>
+
+                <ProgressBar Progress="{Binding SelectedYear.TotalProgress}" 
+                             Style="{StaticResource ProgressStyle}"/>
+
+                <Label Text="{Binding SelectedYear.CompletedCoursesText}" 
+                       FontSize="12" 
+                       TextColor="{StaticResource TextSecondary}"
+                       Margin="0,0,0,10"/>
+
+                <!-- CollectionView avec layout en grille responsive -->
+                <CollectionView ItemsSource="{Binding SelectedYear.Courses}"
+                                SelectionMode="None">
+                    <CollectionView.ItemsLayout>
+                        <GridItemsLayout Orientation="Vertical" 
+                                         Span="3" 
+                                         HorizontalItemSpacing="15"
+                                         VerticalItemSpacing="15"/>
+                    </CollectionView.ItemsLayout>
+
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <!-- Carte de cours style image fournie -->
+                            <Border Style="{StaticResource CardStyle}"
+                                    Padding="20"
+                                    MinimumWidthRequest="300"
+                                    MinimumHeightRequest="200">
+                                <Grid RowDefinitions="Auto, Auto, Auto, Auto, Auto, Auto" RowSpacing="12">
+
+                                    <!-- En-tête : Icône + Nom -->
+                                    <Grid Grid.Row="0" ColumnDefinitions="Auto, *">
+                                        <Label Grid.Column="0"
+                                               Text="{Binding Icon}" 
+                                               FontSize="28" 
+                                               VerticalOptions="Center"
+                                               Margin="0,0,10,0"/>
+
+                                        <Label Grid.Column="1"
+                                               Text="{Binding Name}" 
+                                               FontSize="16" 
+                                               FontAttributes="Bold" 
+                                               TextColor="{StaticResource TextPrimary}"
+                                               VerticalOptions="Center"
+                                               LineBreakMode="WordWrap"/>
+                                    </Grid>
+
+                                    <!-- Statut (En cours, etc.) -->
+                                    <Label Grid.Row="1" 
+                                           Text="{Binding StatusText}" 
+                                           FontSize="12" 
+                                           TextColor="{StaticResource TextSecondary}"/>
+
+                                    <!-- Barre de progression -->
+                                    <ProgressBar Grid.Row="2" 
+                                                 Progress="{Binding Progress}" 
+                                                 Style="{StaticResource ProgressStyle}"
+                                                 Margin="0,5,0,5"/>
+
+                                    <!-- Points : Actuel / Total -->
+                                    <Grid Grid.Row="3" ColumnDefinitions="Auto, Auto, *">
+                                        <Label Grid.Column="0"
+                                               Text="{Binding CurrentPoints}" 
+                                               FontSize="32" 
+                                               FontAttributes="Bold" 
+                                               TextColor="{StaticResource AccentOrange}"
+                                               VerticalOptions="Center"/>
+                                        <Label Grid.Column="1"
+                                               Text="{Binding TotalPointsText, StringFormat=' / {0}'}" 
+                                               FontSize="18" 
+                                               TextColor="{StaticResource TextSecondary}"
+                                               VerticalOptions="End"
+                                               Margin="0,0,0,5"/>
+                                    </Grid>
+
+                                    <!-- Boutons d'action -->
+                                    <Grid Grid.Row="4" ColumnDefinitions="Auto, Auto, Auto, *" ColumnSpacing="10">
+                                        <Button Grid.Column="0"
+                                                Text="−" 
+                                                Style="{StaticResource SmallButtonStyle}"
+                                                CommandParameter="{Binding .}"
+                                                Clicked="OnDecrementClicked"/>
+
+                                        <Button Grid.Column="1"
+                                                Text="+" 
+                                                Style="{StaticResource SmallButtonStyle}"
+                                                CommandParameter="{Binding .}"
+                                                Clicked="OnIncrementClicked"/>
+
+                                        <Button Grid.Column="2"
+                                                Text="+5" 
+                                                WidthRequest="50"
+                                                HeightRequest="40"
+                                                BackgroundColor="{StaticResource ButtonBackground}"
+                                                TextColor="{StaticResource TextPrimary}"
+                                                CornerRadius="8"
+                                                CommandParameter="{Binding .}"
+                                                Clicked="OnIncrement5Clicked"/>
+                                    </Grid>
+
+                                    <!-- Texte "Il te reste X points" -->
+                                    <Label Grid.Row="5" 
+                                           Text="{Binding RemainingText}" 
+                                           FontSize="12" 
+                                           TextColor="{StaticResource TextSecondary}"/>
+
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+
+            </VerticalStackLayout>
+        </ScrollView>
+    </Grid>
+</ContentPage>

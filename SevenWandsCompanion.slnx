@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="SevenWandsCompanion/SevenWandsCompanion.csproj" DisplayName="SevenwandsCompanion" />
+  <Project Path="SevenwandsConsoleTool/SevenwandsConsoleTool.csproj" />
+</Solution>

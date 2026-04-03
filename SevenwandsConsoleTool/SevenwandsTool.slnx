@@ -1,0 +1,8 @@
+<Solution>
+  <Project Path="../canva/canva.csproj" Id="ced14717-9b21-4e5f-a279-a96df1004777">
+    <BuildDependency Project="SevenwandsConsoleTool.csproj" />
+    <Build Solution="Debug|*" Project="false" />
+  </Project>
+  <Project Path="../SevenwandsPotionMaker/SevenwandsPotionMaker.csproj" />
+  <Project Path="SevenwandsConsoleTool.csproj" />
+</Solution>

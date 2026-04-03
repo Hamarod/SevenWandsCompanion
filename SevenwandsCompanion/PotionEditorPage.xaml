@@ -1,0 +1,239 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="SevenwandsCompanion.PotionEditorPage"
+             Title="Éditeur de Potions"
+             BackgroundColor="{StaticResource BackgroundDark}">
+
+    <Grid Padding="20" RowDefinitions="Auto, *" RowSpacing="20">
+
+        <!-- En-tête -->
+        <Grid Grid.Row="0" ColumnDefinitions="*, Auto">
+            <VerticalStackLayout Grid.Column="0" Spacing="5">
+                <Label Text="{Binding PageTitle}" 
+                       Style="{StaticResource TitleStyle}" 
+                       HorizontalOptions="Start"/>
+                <Label Text="{Binding PageSubtitle}" 
+                       FontSize="14" 
+                       TextColor="{StaticResource TextSecondary}"/>
+            </VerticalStackLayout>
+
+            <!-- Bouton Retour -->
+            <Button Grid.Column="1"
+                    Text="← Retour"
+                    FontSize="14"
+                    BackgroundColor="{StaticResource ButtonBackground}"
+                    TextColor="{StaticResource TextPrimary}"
+                    CornerRadius="8"
+                    Padding="20,10"
+                    Clicked="OnBackClicked"
+                    VerticalOptions="Center"/>
+        </Grid>
+
+        <!-- Contenu principal -->
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Spacing="20">
+
+                <!-- Section : Informations générales -->
+                <Border Style="{StaticResource CardStyle}" Padding="20">
+                    <VerticalStackLayout Spacing="15">
+                        <Label Text="📋 INFORMATIONS GÉNÉRALES" 
+                               Style="{StaticResource SectionTitleStyle}"/>
+
+                        <!-- Nom -->
+                        <VerticalStackLayout Spacing="5">
+                            <Label Text="Nom de la potion *" 
+                                   TextColor="{StaticResource TextSecondary}" 
+                                   FontSize="12"/>
+                            <Entry Text="{Binding EditedPotion.Name}" 
+                                   Style="{StaticResource EntryStyle}"
+                                   Placeholder="Ex: Jouvencine"/>
+                        </VerticalStackLayout>
+
+                        <!-- Description -->
+                        <VerticalStackLayout Spacing="5">
+                            <Label Text="Description" 
+                                   TextColor="{StaticResource TextSecondary}" 
+                                   FontSize="12"/>
+                            <Editor Text="{Binding EditedPotion.Description}" 
+                                    TextColor="{StaticResource TextPrimary}"
+                                    BackgroundColor="{StaticResource BackgroundCard}"
+                                    Placeholder="Décrivez l'effet de la potion..."
+                                    HeightRequest="80"
+                                    AutoSize="TextChanges"/>
+                        </VerticalStackLayout>
+
+                        <!-- Ligne : Catégorie + Niveau -->
+                        <Grid ColumnDefinitions="*, *" ColumnSpacing="15">
+                            <VerticalStackLayout Grid.Column="0" Spacing="5">
+                                <Label Text="Catégorie *" 
+                                       TextColor="{StaticResource TextSecondary}" 
+                                       FontSize="12"/>
+                                <Picker ItemsSource="{Binding Categories}"
+                                        SelectedItem="{Binding EditedPotion.Category}"
+                                        Style="{StaticResource PickerStyle}"/>
+                            </VerticalStackLayout>
+
+                            <VerticalStackLayout Grid.Column="1" Spacing="5">
+                                <Label Text="Niveau minimum *" 
+                                       TextColor="{StaticResource TextSecondary}" 
+                                       FontSize="12"/>
+                                <Entry Text="{Binding EditedPotion.MinimumLevel}" 
+                                       Keyboard="Numeric"
+                                       Style="{StaticResource EntryStyle}"
+                                       Placeholder="0"/>
+                            </VerticalStackLayout>
+                        </Grid>
+
+                        <!-- Ligne : Prix de vente + Expérience -->
+                        <Grid ColumnDefinitions="*, *" ColumnSpacing="15">
+                            <VerticalStackLayout Grid.Column="0" Spacing="5">
+                                <Label Text="💰 Prix de vente *" 
+                                       TextColor="{StaticResource TextSecondary}" 
+                                       FontSize="12"/>
+                                <Entry Text="{Binding EditedPotion.SellPrice}" 
+                                       Keyboard="Numeric"
+                                       Style="{StaticResource EntryStyle}"
+                                       Placeholder="0.0"/>
+                            </VerticalStackLayout>
+
+                            <VerticalStackLayout Grid.Column="1" Spacing="5">
+                                <Label Text="⭐ Expérience *" 
+                                       TextColor="{StaticResource TextSecondary}" 
+                                       FontSize="12"/>
+                                <Entry Text="{Binding EditedPotion.Experience}" 
+                                       Keyboard="Numeric"
+                                       Style="{StaticResource EntryStyle}"
+                                       Placeholder="0"/>
+                            </VerticalStackLayout>
+                        </Grid>
+
+                        <!-- Position dans la liste -->
+                        <VerticalStackLayout Spacing="5">
+                            <Label Text="📍 Position dans la liste" 
+                                   TextColor="{StaticResource TextSecondary}" 
+                                   FontSize="12"/>
+                            <Picker ItemsSource="{Binding PositionOptions}"
+                                    SelectedItem="{Binding SelectedPosition}"
+                                    Style="{StaticResource PickerStyle}"/>
+                            <Label Text="Choisissez où placer cette potion dans la liste d'affichage" 
+                                   TextColor="{StaticResource TextSecondary}" 
+                                   FontSize="10"
+                                   Margin="0,5,0,0"/>
+                        </VerticalStackLayout>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- Section : Recette -->
+                <Border Style="{StaticResource CardStyle}" Padding="20">
+                    <VerticalStackLayout Spacing="15">
+                        <Label Text="📜 RECETTE" 
+                               Style="{StaticResource SectionTitleStyle}"/>
+
+                        <!-- Liste des ingrédients de la recette -->
+                        <CollectionView ItemsSource="{Binding RecipeIngredients}">
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Style="{StaticResource CardStyle}"
+                                            BackgroundColor="{StaticResource BackgroundDark}"
+                                            Margin="0,5"
+                                            Padding="12">
+                                        <Grid ColumnDefinitions="*, Auto, Auto, Auto" ColumnSpacing="10">
+                                            <!-- Sélecteur d'ingrédient -->
+                                            <Picker Grid.Column="0"
+                                                    ItemsSource="{Binding AvailableIngredients}"
+                                                    ItemDisplayBinding="{Binding Name}"
+                                                    SelectedItem="{Binding SelectedIngredient, Mode=TwoWay}"
+                                                    Style="{StaticResource PickerStyle}"
+                                                    VerticalOptions="Center"/>
+
+                                            <!-- Quantité -->
+                                            <Entry Grid.Column="1"
+                                                   Text="{Binding Quantity}"
+                                                   Keyboard="Numeric"
+                                                   WidthRequest="80"
+                                                   Style="{StaticResource EntryStyle}"
+                                                   Placeholder="Qté"
+                                                   VerticalOptions="Center"/>
+
+                                            <!-- Label indicateur -->
+                                            <Label Grid.Column="2"
+                                                   Text="x"
+                                                   TextColor="{StaticResource TextSecondary}"
+                                                   FontSize="14"
+                                                   VerticalOptions="Center"/>
+
+                                            <!-- Bouton Supprimer -->
+                                            <Button Grid.Column="3"
+                                                    Text="🗑️"
+                                                    FontSize="16"
+                                                    WidthRequest="40"
+                                                    HeightRequest="40"
+                                                    BackgroundColor="{StaticResource AccentRed}"
+                                                    TextColor="White"
+                                                    CornerRadius="6"
+                                                    CommandParameter="{Binding .}"
+                                                    Clicked="OnRemoveIngredientClicked"
+                                                    VerticalOptions="Center"/>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                            <CollectionView.EmptyView>
+                                <Label Text="Aucun ingrédient ajouté. Cliquez sur '+ Ajouter ingrédient' ci-dessous pour commencer."
+                                       TextColor="{StaticResource TextSecondary}"
+                                       FontSize="12"
+                                       HorizontalOptions="Center"
+                                       Margin="0,20"/>
+                            </CollectionView.EmptyView>
+                        </CollectionView>
+
+                        <!-- Boutons d'action pour la recette -->
+                        <Grid ColumnDefinitions="*, *" ColumnSpacing="10" Margin="0,10,0,0">
+                            <Button Grid.Column="0"
+                                    Text="+ Ajouter ingrédient"
+                                    FontSize="12"
+                                    BackgroundColor="{StaticResource AccentGreen}"
+                                    TextColor="White"
+                                    CornerRadius="6"
+                                    Padding="15,10"
+                                    Clicked="OnAddIngredientClicked"/>
+                            <Button Grid.Column="1"
+                                    Text="🌿 Gérer ingrédients"
+                                    FontSize="12"
+                                    BackgroundColor="{StaticResource AccentBlue}"
+                                    TextColor="White"
+                                    CornerRadius="6"
+                                    Padding="15,10"
+                                    Clicked="OnManageIngredientsClicked"/>
+                        </Grid>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- Boutons d'action -->
+                <Grid ColumnDefinitions="*, *" ColumnSpacing="15" Margin="0,10,0,20">
+                    <Button Grid.Column="0"
+                            Text="❌ Annuler"
+                            BackgroundColor="{StaticResource ButtonBackground}"
+                            TextColor="{StaticResource TextPrimary}"
+                            FontSize="16"
+                            FontAttributes="Bold"
+                            HeightRequest="50"
+                            CornerRadius="8"
+                            Clicked="OnCancelClicked"/>
+
+                    <Button Grid.Column="1"
+                            Text="💾 Enregistrer"
+                            BackgroundColor="{StaticResource AccentGreen}"
+                            TextColor="White"
+                            FontSize="16"
+                            FontAttributes="Bold"
+                            HeightRequest="50"
+                            CornerRadius="8"
+                            Clicked="OnSaveClicked"/>
+                </Grid>
+
+            </VerticalStackLayout>
+        </ScrollView>
+    </Grid>
+</ContentPage>

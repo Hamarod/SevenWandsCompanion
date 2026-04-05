@@ -2,6 +2,8 @@
 
 Application .NET MAUI pour suivre et gérer les potions et jetons du jeu Sevenwands.
 
+Credit : Pour la gestion des jetons toute l'inspiration viens de Bubulle allez soutenir ici : https://kaldeo.alwaysdata.net/jetons
+
 ---
 
 ## 🚀 Démarrage Rapide

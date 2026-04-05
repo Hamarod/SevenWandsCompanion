@@ -226,6 +226,17 @@ namespace SevenwandsCompanion
             }
         }
 
+        public void OnIncrement2Clicked(object sender, EventArgs e)
+        {
+            if (sender is Button button && button.CommandParameter is Course course)
+            {
+                course.CurrentPoints += 2;
+                SelectedYear?.RefreshCalculations();
+                UpdateStatistics();
+                _ = SaveDataAsync();
+            }
+        }
+
         public void OnIncrement5Clicked(object sender, EventArgs e)
         {
             if (sender is Button button && button.CommandParameter is Course course)

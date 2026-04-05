@@ -131,7 +131,7 @@
 
         <!-- Grille des cours - Layout responsive -->
         <ScrollView Grid.Row="3">
-            <VerticalStackLayout Spacing="20">
+            <VerticalStackLayout>
 
                 <!-- En-tête de la section -->
                 <Grid ColumnDefinitions="Auto, *" Margin="0,0,0,10">
@@ -161,8 +161,8 @@
                     <CollectionView.ItemsLayout>
                         <GridItemsLayout Orientation="Vertical" 
                                          Span="3" 
-                                         HorizontalItemSpacing="15"
-                                         VerticalItemSpacing="15"/>
+                                         HorizontalItemSpacing="10"
+                                         VerticalItemSpacing="10"/>
                     </CollectionView.ItemsLayout>
 
                     <CollectionView.ItemTemplate>
@@ -207,20 +207,20 @@
                                     <Grid Grid.Row="3" ColumnDefinitions="Auto, Auto, *">
                                         <Label Grid.Column="0"
                                                Text="{Binding CurrentPoints}" 
-                                               FontSize="32" 
+                                               FontSize="22" 
                                                FontAttributes="Bold" 
                                                TextColor="{StaticResource AccentOrange}"
                                                VerticalOptions="Center"/>
                                         <Label Grid.Column="1"
                                                Text="{Binding TotalPointsText, StringFormat=' / {0}'}" 
-                                               FontSize="18" 
+                                               FontSize="12" 
                                                TextColor="{StaticResource TextSecondary}"
                                                VerticalOptions="End"
                                                Margin="0,0,0,5"/>
                                     </Grid>
 
                                     <!-- Boutons d'action -->
-                                    <Grid Grid.Row="4" ColumnDefinitions="Auto, Auto, Auto, *" ColumnSpacing="10">
+                                    <Grid Grid.Row="4" ColumnDefinitions="Auto, Auto, Auto, Auto, *" ColumnSpacing="10">
                                         <Button Grid.Column="0"
                                                 Text="−" 
                                                 Style="{StaticResource SmallButtonStyle}"
@@ -234,6 +234,16 @@
                                                 Clicked="OnIncrementClicked"/>
 
                                         <Button Grid.Column="2"
+                                                Text="+2" 
+                                                WidthRequest="50"
+                                                HeightRequest="40"
+                                                BackgroundColor="{StaticResource ButtonBackground}"
+                                                TextColor="{StaticResource TextPrimary}"
+                                                CornerRadius="8"
+                                                CommandParameter="{Binding .}"
+                                                Clicked="OnIncrement2Clicked"/>
+
+                                        <Button Grid.Column="3"
                                                 Text="+5" 
                                                 WidthRequest="50"
                                                 HeightRequest="40"

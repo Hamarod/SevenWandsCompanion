@@ -27,6 +27,7 @@ namespace SevenwandsConsoleTool
                     OnPropertyChanged(nameof(Progress));
                     OnPropertyChanged(nameof(RemainingPoints));
                     OnPropertyChanged(nameof(ProgressText));
+                    OnPropertyChanged(nameof(RemainingText));
                     OnPropertyChanged(nameof(IsCompleted));
                     OnPropertyChanged(nameof(StatusText));
                 }

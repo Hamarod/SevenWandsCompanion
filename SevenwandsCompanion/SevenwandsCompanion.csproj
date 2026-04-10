@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<TargetFrameworks>net10.0-android;net10.0-ios;net10.0-maccatalyst</TargetFrameworks>
@@ -36,7 +36,7 @@
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">21.0</SupportedOSPlatformVersion>
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</SupportedOSPlatformVersion>
 		<TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
-		<AssemblyVersion>1.1.0.0</AssemblyVersion>
+		<AssemblyVersion>1.1.0.1</AssemblyVersion>
 		<FileVersion>1.1.0.0</FileVersion>
 		<PackageIcon>potionmakericon.svg</PackageIcon>
 	</PropertyGroup>
@@ -130,5 +130,20 @@
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </None>
 	</ItemGroup>
+
+	<!-- Configuration de signature Android (seulement si le keystore existe) -->
+	<PropertyGroup Condition="'$(TargetFramework)' == 'net10.0-android' AND Exists('my-release-key.keystore')">
+		<AndroidSigningKeyStore>my-release-key.keystore</AndroidSigningKeyStore>
+		<AndroidSigningStorePass></AndroidSigningStorePass>
+		<AndroidSigningKeyAlias>key0</AndroidSigningKeyAlias>
+		<AndroidSigningKeyPass></AndroidSigningKeyPass>
+	</PropertyGroup>
+
+	<!-- D�sactiver la signature Android si le keystore n'existe pas (ex: sur GitHub Actions) -->
+	<PropertyGroup Condition="'$(TargetFramework)' == 'net10.0-android' AND !Exists('my-release-key.keystore')">
+		<AndroidPackageFormat>apk</AndroidPackageFormat>
+		<AndroidUseAapt2>true</AndroidUseAapt2>
+		<AndroidCreatePackagePerAbi>false</AndroidCreatePackagePerAbi>
+	</PropertyGroup>
 
 </Project>

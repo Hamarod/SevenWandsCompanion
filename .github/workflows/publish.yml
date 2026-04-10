@@ -3,13 +3,14 @@ name: Publish SevenWandsCompanion
 on:
   push:
     tags:
-      - 'v*' # Se déclenche uniquement quand tu pousses un tag (ex: v1.0.3)
+      - 'v*' # Se déclenche sur v1.0, v1.1.0.0, etc.
+  workflow_dispatch: # Permet de lancer le build manuellement depuis l'onglet Actions
 
 jobs:
   build-and-release:
     runs-on: windows-latest
     permissions:
-      contents: write # Autorise GitHub à créer la release et uploader les fichiers
+      contents: write
 
     steps:
       - name: Checkout code
@@ -23,35 +24,34 @@ jobs:
       - name: Install MAUI Workloads
         run: dotnet workload install maui
 
-      # --- LOGIQUE ANDROID ---
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: 'microsoft'
           java-version: '17'
 
+      - name: Restore Dependencies
+        run: dotnet restore SevenwandsCompanion/SevenwandsCompanion.csproj
+
       - name: Decode Keystore
         shell: pwsh
         run: |
           echo "${{ secrets.KEYSTORE_FILE }}" > keystore_base64.txt
-          certutil -decode keystore_base64.txt my-release-key.keystore
-
-      - name: Restore Dependencies
-        run: dotnet restore SevenwandsCompanion/SevenwandsCompanion.csproj
+          certutil -decode keystore_base64.txt "${{ github.workspace }}/my-release-key.keystore"
 
       - name: Publish Android
+        shell: pwsh
         run: |
           dotnet publish SevenwandsCompanion/SevenwandsCompanion.csproj `
             -c Release `
             -f net10.0-android `
             -p:AndroidKeyStore=true `
-            -p:AndroidSigningKeyStore=my-release-key.keystore `
-            -p:AndroidSigningKeyAlias=${{ secrets.KEY_ALIAS }} `
-            -p:AndroidSigningKeyPass=${{ secrets.KEY_PASSWORD }} `
-            -p:AndroidSigningStorePass=${{ secrets.KEY_PASSWORD }} `
+            -p:AndroidSigningKeyStore="${{ github.workspace }}/my-release-key.keystore" `
+            -p:AndroidSigningKeyAlias='${{ secrets.KEY_ALIAS }}' `
+            -p:AndroidSigningKeyPass='${{ secrets.KEY_PASSWORD }}' `
+            -p:AndroidSigningStorePass='${{ secrets.KEY_PASSWORD }}' `
             --no-restore
 
-      # --- LOGIQUE WINDOWS ---
       - name: Publish Windows MSIX
         run: |
           dotnet publish SevenwandsCompanion/SevenwandsCompanion.csproj `
@@ -64,15 +64,15 @@ jobs:
       - name: Zip Windows Build
         shell: pwsh
         run: |
-          $publishPath = "SevenwandsCompanion\bin\Release\net10.0-windows10.0.19041.0\win10-x64\publish"
+          # Utilisation de slashes pour la compatibilité
+          $publishPath = "SevenwandsCompanion/bin/Release/net10.0-windows10.0.19041.0/win10-x64/publish"
           if (Test-Path $publishPath) {
-            Compress-Archive -Path "$publishPath\*" -DestinationPath "SevenwandsCompanion-Windows-${{ github.ref_name }}.zip"
+            Compress-Archive -Path "$publishPath/*" -DestinationPath "SevenwandsCompanion-Windows-${{ github.ref_name }}.zip"
             Write-Host "✅ Archive Windows créée avec succès"
           } else {
             Write-Warning "⚠️ Chemin de publication Windows introuvable: $publishPath"
           }
 
-      # --- CRÉATION DE LA RELEASE ---
       - name: Create Release and Upload Assets
         uses: softprops/action-gh-release@v2
         with:
@@ -85,31 +85,14 @@ jobs:
           body: |
             🎯 **SevenWandsCompanion - Sevenwands Potion Maker**
             
-            📱 Nouvelle version générée automatiquement par GitHub Actions.
+            📱 Nouvelle version générée automatiquement.
             
-            ## 📦 Téléchargements disponibles
-            
-            ### Android 📱
-            - Téléchargez le fichier `.apk` pour Android (API 21+)
-            - Installation : Activez "Sources inconnues" dans les paramètres
-            
-            ### Windows 🪟
-            - Téléchargez le fichier `.zip` pour Windows 10/11
-            - Extraction : Décochez "Bloquer" dans les propriétés avant d'extraire
-            - Nécessite .NET 10 Runtime
-            
-            ## 🔄 Changements
-            Voir l'historique des commits pour plus de détails des modifications.
-            
-            ## 🎨 Fonctionnalités
-            - 📊 Suivi des jetons de cours
-            - 🧪 Éditeur de potions
-            - 🌿 Gestion des ingrédients
-            - 💾 Sauvegarde automatique
+            ### 📦 Téléchargements
+            - **Android** : Fichier `.apk` (activez les sources inconnues)
+            - **Windows** : Fichier `.zip` (dézippez et lancez l'exe)
             
             ---
             Version: ${{ github.ref_name }}
-            Date: ${{ github.event.head_commit.timestamp }}
           draft: false
           prerelease: false
         env:

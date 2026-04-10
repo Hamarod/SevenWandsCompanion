@@ -23,14 +23,14 @@ jobs:
       run: dotnet workload install maui
 
     - name: Restore dependencies
-      run: dotnet restore SevenWandsCompanion.sln
+      run: dotnet restore SevenwandsCompanion/SevenwandsCompanion.csproj
 
-    - name: Build Solution (exclude Android)
-      run: dotnet build SevenWandsCompanion/SevenWandsCompanion.csproj -c Release /p:TargetFrameworks=net10.0-windows10.0.19041.0
+    - name: Build Windows
+      run: dotnet build SevenwandsCompanion/SevenwandsCompanion.csproj -c Release /p:TargetFrameworks=net10.0-windows10.0.19041.0
 
     - name: Upload Windows Build Artifacts
       uses: actions/upload-artifact@v4
       with:
         name: windows-build
         path: |
-          SevenWandsCompanion/bin/Release/net10.0-windows10.0.19041.0/
+          SevenwandsCompanion/bin/Release/net10.0-windows10.0.19041.0/

@@ -34,18 +34,25 @@ jobs:
         shell: pwsh
         run: |
           echo "${{ secrets.KEYSTORE_FILE }}" > keystore_base64.txt
-          certutil -decode keystore_base64.txt my-release-key.keystore
+          certutil -decode keystore_base64.txt ${{ github.workspace }}/my-release-key.keystore
 
       - name: Restore Dependencies
         run: dotnet restore SevenwandsCompanion/SevenwandsCompanion.csproj
 
+      - name: Decode Keystore
+        shell: pwsh
+        run: |
+          echo "${{ secrets.KEYSTORE_FILE }}" > keystore_base64.txt
+          certutil -decode keystore_base64.txt ${{ github.workspace }}/my-release-key.keystore
+
       - name: Publish Android
+        shell: pwsh
         run: |
           dotnet publish SevenwandsCompanion/SevenwandsCompanion.csproj `
             -c Release `
             -f net10.0-android `
             -p:AndroidKeyStore=true `
-            -p:AndroidSigningKeyStore=my-release-key.keystore `
+            -p:AndroidSigningKeyStore=${{ github.workspace }}/my-release-key.keystore `
             -p:AndroidSigningKeyAlias='${{ secrets.KEY_ALIAS }}' `
             -p:AndroidSigningKeyPass='${{ secrets.KEY_PASSWORD }}' `
             -p:AndroidSigningStorePass='${{ secrets.KEY_PASSWORD }}' `

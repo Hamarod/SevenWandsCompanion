@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<?xaml-comp compile="true" ?>
+<ResourceDictionary 
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+
+    <!-- 🦉 THÈME BRISELUNE : Bleu et argent - Hibou -->
+
+    <!-- Couleurs de fond -->
+    <Color x:Key="BackgroundDark">#0A0E1A</Color>
+    <Color x:Key="BackgroundCard">#1E2A3A</Color>
+    <Color x:Key="BorderColor">#1E3A8A</Color>
+
+    <!-- Couleurs de texte -->
+    <Color x:Key="TextPrimary">White</Color>
+    <Color x:Key="TextSecondary">#C0C0C0</Color>
+
+    <!-- Couleurs d'accent -->
+    <Color x:Key="AccentGold">#C0C0C0</Color>
+    <Color x:Key="AccentOrange">#3B82F6</Color>
+    <Color x:Key="AccentRed">#1E40AF</Color>
+    <Color x:Key="AccentSecondary">#94A3B8</Color>
+
+    <!-- Boutons et contrôles -->
+    <Color x:Key="ButtonBackground">#1E3A8A</Color>
+    <Color x:Key="ButtonBackgroundHover">#2E4A9A</Color>
+
+</ResourceDictionary>

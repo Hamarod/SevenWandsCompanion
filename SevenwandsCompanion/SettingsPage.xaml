@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="SevenwandsCompanion.SettingsPage"
+             Title="Paramètres"
+             BackgroundColor="{DynamicResource BackgroundDark}">
+
+    <ScrollView Padding="20">
+        <VerticalStackLayout Spacing="20">
+
+            <!-- En-tête -->
+            <Label Text="⚙️ PARAMÈTRES" 
+                   Style="{StaticResource TitleStyle}"/>
+
+            <!-- Section Maison -->
+            <Border Style="{StaticResource CardStyle}" Padding="20">
+                <VerticalStackLayout Spacing="15">
+                    <Label Text="🏰 Ma Maison" 
+                           FontSize="18" 
+                           FontAttributes="Bold" 
+                           TextColor="{StaticResource AccentGold}"/>
+
+                    <Grid ColumnDefinitions="*, Auto" ColumnSpacing="10">
+                        <VerticalStackLayout Grid.Column="0" Spacing="5">
+                            <Label x:Name="CurrentHouseLabel"
+                                   Text="Maison actuelle : -" 
+                                   FontSize="16" 
+                                   TextColor="{StaticResource TextPrimary}"/>
+                            <Label Text="Clique sur 'Changer' pour sélectionner une autre maison" 
+                                   FontSize="12" 
+                                   TextColor="{StaticResource TextSecondary}"/>
+                        </VerticalStackLayout>
+
+                        <Button Grid.Column="1"
+                                Text="Changer"
+                                WidthRequest="100"
+                                HeightRequest="40"
+                                BackgroundColor="{DynamicResource ButtonBackground}"
+                                TextColor="{DynamicResource TextPrimary}"
+                                CornerRadius="8"
+                                Clicked="OnChangeHouseClicked"
+                                VerticalOptions="Center"/>
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Section Données -->
+            <Border Style="{StaticResource CardStyle}" Padding="20">
+                <VerticalStackLayout Spacing="15">
+                    <Label Text="💾 Gestion des Données" 
+                           FontSize="18" 
+                           FontAttributes="Bold" 
+                           TextColor="{StaticResource AccentGold}"/>
+
+                    <Button Text="🔄 Réinitialiser toutes les données"
+                            BackgroundColor="darkRed"
+                            TextColor="White"
+                            CornerRadius="8"
+                            Clicked="OnResetDataClicked"/>
+
+                    <Label Text="⚠️ Cette action supprimera toutes vos progressions et paramètres" 
+                           FontSize="12" 
+                           TextColor="{StaticResource TextSecondary}"
+                           HorizontalOptions="Center"/>
+                </VerticalStackLayout>
+            </Border>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

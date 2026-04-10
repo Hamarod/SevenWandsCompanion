@@ -2,8 +2,8 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="SevenwandsCompanion.PotionEditorPage"
-             Title="Éditeur de Potions"
-             BackgroundColor="{StaticResource BackgroundDark}">
+             BackgroundColor="{DynamicResource BackgroundDark}"
+             Shell.NavBarIsVisible="False">
 
     <Grid Padding="20" RowDefinitions="Auto, *" RowSpacing="20">
 
@@ -169,7 +169,7 @@
                                                     FontSize="16"
                                                     WidthRequest="40"
                                                     HeightRequest="40"
-                                                    BackgroundColor="{StaticResource AccentRed}"
+                                                    BackgroundColor="{DynamicResource AccentRed}"
                                                     TextColor="White"
                                                     CornerRadius="6"
                                                     CommandParameter="{Binding .}"
@@ -193,7 +193,7 @@
                             <Button Grid.Column="0"
                                     Text="+ Ajouter ingrédient"
                                     FontSize="12"
-                                    BackgroundColor="{StaticResource AccentGreen}"
+                                    BackgroundColor="{DynamicResource ButtonBackground}"
                                     TextColor="White"
                                     CornerRadius="6"
                                     Padding="15,10"
@@ -201,7 +201,7 @@
                             <Button Grid.Column="1"
                                     Text="🌿 Gérer ingrédients"
                                     FontSize="12"
-                                    BackgroundColor="{StaticResource AccentBlue}"
+                                    BackgroundColor="{DynamicResource ButtonBackground}"
                                     TextColor="White"
                                     CornerRadius="6"
                                     Padding="15,10"
@@ -224,7 +224,7 @@
 
                     <Button Grid.Column="1"
                             Text="💾 Enregistrer"
-                            BackgroundColor="{StaticResource AccentGreen}"
+                            BackgroundColor="{DynamicResource ButtonBackground}"
                             TextColor="White"
                             FontSize="16"
                             FontAttributes="Bold"

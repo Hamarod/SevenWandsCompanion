@@ -1,88 +1,73 @@
-# 🎯 Sevenwands Companion
+# 🎯 SevenWands Companion
 
-Application .NET MAUI pour suivre et gérer les potions et jetons du jeu Sevenwands.
+**Application compagnon pour le jeu de société Sevenwands**
 
-Credit : Pour la gestion des jetons toute l'inspiration viens de Bubulle allez soutenir ici : https://kaldeo.alwaysdata.net/jetons
+Gérez facilement vos potions, ingrédients et suivez votre progression académique avec cette application intuitive.
 
----
-
-## 🚀 Démarrage Rapide
-
-### Prérequis
-- .NET 10 SDK
-- Visual Studio 2026 ou supérieur
-- Windows SDK (pour la signature de code)
-
-### Installation
-1. Cloner le repository
-```bash
-git clone https://github.com/Hamarod/SevenWandsCompanion
-```
-
-2. Ouvrir la solution dans Visual Studio
-3. Restaurer les packages NuGet
-4. Compiler et exécuter
+> 💡 **Crédit** : L'inspiration pour la gestion des jetons vient de [Bubulle - Kaldeo](https://kaldeo.alwaysdata.net/jetons)
 
 ---
 
-## 📦 Structure du Projet
+## 📥 Téléchargement
 
-### SevenwandsCompanion (Application MAUI)
-Application principale avec interface utilisateur pour :
-- 📊 Suivi des jetons (Token Tracking)
-- 🧪 Éditeur de potions
-- 🌿 Éditeur d'ingrédients
+Téléchargez la dernière version depuis la page [Releases](https://github.com/Hamarod/SevenWandsCompanion/releases) :
 
-### SevenwandsConsoleTool
-Outils de build et scripts pour la distribution de l'application.
+- 📱 **Android** : Fichier `.apk` (Android 5.0+)
+- 🪟 **Windows** : Fichier `.zip` (Windows 10/11)
 
 ---
 
-## 🎨 Direction Artistique
+## ✨ Fonctionnalités
 
-L'application utilise une palette sombre et élégante inspirée de l'univers magique :
-- **Fond principal** : `#1A1D29`
-- **Cartes/Conteneurs** : `#252836`
-- **Accent doré** : `#D4AF37`
-- **Texte** : Blanc et `#8B8B8B`
+### 📊 Suivi des Jetons
+- Suivez votre progression dans chaque cours
+- Visualisez vos statistiques par année
+- Incrémentez rapidement avec les boutons +1, +2, +5
+- Sauvegarde automatique de votre progression
+
+### 🧪 Gestionnaire de Potions
+- Créez et éditez vos recettes de potions
+- Consultez les effets et ingrédients nécessaires
+- Interface élégante avec thème sombre
+
+### 🌿 Base d'Ingrédients
+- Parcourez tous les ingrédients disponibles
+- Consultez leurs propriétés et utilisations
 
 ---
 
-## 📊 Fonctionnalités Token Tracking
+## 🚀 Installation
 
-- ✅ Sauvegarde automatique des données
-- ✅ Deux niveaux de sauvegarde (AppDataDirectory + Source en DEBUG)
-- ✅ Chargement intelligent des données
-- ✅ Incrémentation/Décrémentation rapide (+1, -1, +5)
+### Android 📱
+1. Téléchargez le fichier `.apk`
+2. Activez "Sources inconnues" dans les paramètres
+3. Installez l'application
 
----
-
-## 🔨 Build et Distribution
-
-### Build Rapide (Sans Signature)
-```powershell
-cd SevenwandsConsoleTool\Scripts
-.\QuickBuild.bat
-# Choisir option [3]
-```
-
-### Build avec Signature (Recommandé)
-```powershell
-# 1. Créer le certificat (une seule fois, en Administrateur)
-.\Create-CodeSigningCertificate.ps1
-
-# 2. Build complet
-.\Build-And-Package.ps1
-```
+### Windows 🪟
+1. Téléchargez le fichier `.zip`
+2. Clic droit → Propriétés → Décochez "Bloquer"
+3. Extrayez le contenu
+4. Lancez l'exécutable
 
 ---
 
 ## 🤝 Contribution
 
-Les contributions sont les bienvenues ! N'hésitez pas à ouvrir une issue ou une pull request.
+Les contributions sont les bienvenues ! N'hésitez pas à :
+- Signaler des bugs via les [Issues](https://github.com/Hamarod/SevenWandsCompanion/issues)
+- Proposer de nouvelles fonctionnalités
+- Soumettre des pull requests
 
 ---
 
 ## 📄 Licence
 
 Projet personnel - Tous droits réservés
+
+---
+
+## 🔗 Liens Utiles
+
+- [Releases](https://github.com/Hamarod/SevenWandsCompanion/releases) - Téléchargez l'application
+- [Issues](https://github.com/Hamarod/SevenWandsCompanion/issues) - Signalez un problème
+- [Kaldeo - Bubulle](https://kaldeo.alwaysdata.net/jetons) - Inspiration originale (peut être plus disponible)

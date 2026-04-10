@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<?xaml-comp compile="true" ?>
+<ResourceDictionary 
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+
+    <!-- 🔥 THÈME LOMBRASIER : Rouge et noir avec or - Phoenix -->
+
+    <!-- Couleurs de fond -->
+    <Color x:Key="BackgroundDark">#0D0808</Color>
+    <Color x:Key="BackgroundCard">#2D1414</Color>
+    <Color x:Key="BorderColor">#8B0000</Color>
+
+    <!-- Couleurs de texte -->
+    <Color x:Key="TextPrimary">White</Color>
+    <Color x:Key="TextSecondary">#C0C0C0</Color>
+
+    <!-- Couleurs d'accent -->
+    <Color x:Key="AccentGold">#D4AF37</Color>
+    <Color x:Key="AccentOrange">#DC2626</Color>
+    <Color x:Key="AccentRed">#8B0000</Color>
+    <Color x:Key="AccentSecondary">#D4AF37</Color>
+
+    <!-- Boutons et contrôles -->
+    <Color x:Key="ButtonBackground">#8B0000</Color>
+    <Color x:Key="ButtonBackgroundHover">#A62020</Color>
+
+</ResourceDictionary>

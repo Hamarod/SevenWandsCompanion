@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<?xaml-comp compile="true" ?>
+<ResourceDictionary 
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+
+    <!-- 🐍 THÈME VERVENIN : Vert et noir avec argent - Serpent -->
+
+    <!-- Couleurs de fond -->
+    <Color x:Key="BackgroundDark">#0A0F0A</Color>
+    <Color x:Key="BackgroundCard">#1A2318</Color>
+    <Color x:Key="BorderColor">#2F5233</Color>
+
+    <!-- Couleurs de texte -->
+    <Color x:Key="TextPrimary">White</Color>
+    <Color x:Key="TextSecondary">#C0C0C0</Color>
+
+    <!-- Couleurs d'accent -->
+    <Color x:Key="AccentGold">#C0C0C0</Color>
+    <Color x:Key="AccentOrange">#10B981</Color>
+    <Color x:Key="AccentRed">#059669</Color>
+    <Color x:Key="AccentSecondary">#9CA3AF</Color>
+
+    <!-- Boutons et contrôles -->
+    <Color x:Key="ButtonBackground">#2F5233</Color>
+    <Color x:Key="ButtonBackgroundHover">#3F6943</Color>
+
+</ResourceDictionary>

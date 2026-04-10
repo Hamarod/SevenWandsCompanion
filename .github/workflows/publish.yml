@@ -1,0 +1,116 @@
+name: Publish SevenWandsCompanion
+
+on:
+  push:
+    tags:
+      - 'v*' # Se déclenche uniquement quand tu pousses un tag (ex: v1.0.3)
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+    permissions:
+      contents: write # Autorise GitHub à créer la release et uploader les fichiers
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Install MAUI Workloads
+        run: dotnet workload install maui
+
+      # --- LOGIQUE ANDROID ---
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'microsoft'
+          java-version: '17'
+
+      - name: Decode Keystore
+        shell: pwsh
+        run: |
+          echo "${{ secrets.KEYSTORE_FILE }}" > keystore_base64.txt
+          certutil -decode keystore_base64.txt my-release-key.keystore
+
+      - name: Restore Dependencies
+        run: dotnet restore SevenwandsCompanion/SevenwandsCompanion.csproj
+
+      - name: Publish Android
+        run: |
+          dotnet publish SevenwandsCompanion/SevenwandsCompanion.csproj `
+            -c Release `
+            -f net10.0-android `
+            -p:AndroidKeyStore=true `
+            -p:AndroidSigningKeyStore=my-release-key.keystore `
+            -p:AndroidSigningKeyAlias=${{ secrets.KEY_ALIAS }} `
+            -p:AndroidSigningKeyPass=${{ secrets.KEY_PASSWORD }} `
+            -p:AndroidSigningStorePass=${{ secrets.KEY_PASSWORD }} `
+            --no-restore
+
+      # --- LOGIQUE WINDOWS ---
+      - name: Publish Windows MSIX
+        run: |
+          dotnet publish SevenwandsCompanion/SevenwandsCompanion.csproj `
+            -c Release `
+            -f net10.0-windows10.0.19041.0 `
+            -p:GenerateAppxPackageOnBuild=true `
+            -p:AppxPackageSigningEnabled=false `
+            --no-restore
+
+      - name: Zip Windows Build
+        shell: pwsh
+        run: |
+          $publishPath = "SevenwandsCompanion\bin\Release\net10.0-windows10.0.19041.0\win10-x64\publish"
+          if (Test-Path $publishPath) {
+            Compress-Archive -Path "$publishPath\*" -DestinationPath "SevenwandsCompanion-Windows-${{ github.ref_name }}.zip"
+            Write-Host "✅ Archive Windows créée avec succès"
+          } else {
+            Write-Warning "⚠️ Chemin de publication Windows introuvable: $publishPath"
+          }
+
+      # --- CRÉATION DE LA RELEASE ---
+      - name: Create Release and Upload Assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            SevenwandsCompanion/bin/Release/net10.0-android/*-Signed.apk
+            SevenwandsCompanion/bin/Release/net10.0-android/publish/*.apk
+            SevenwandsCompanion/bin/Release/net10.0-windows10.0.19041.0/**/*.msix
+            SevenwandsCompanion-Windows-${{ github.ref_name }}.zip
+          name: SevenWandsCompanion ${{ github.ref_name }}
+          body: |
+            🎯 **SevenWandsCompanion - Sevenwands Potion Maker**
+            
+            📱 Nouvelle version générée automatiquement par GitHub Actions.
+            
+            ## 📦 Téléchargements disponibles
+            
+            ### Android 📱
+            - Téléchargez le fichier `.apk` pour Android (API 21+)
+            - Installation : Activez "Sources inconnues" dans les paramètres
+            
+            ### Windows 🪟
+            - Téléchargez le fichier `.zip` pour Windows 10/11
+            - Extraction : Décochez "Bloquer" dans les propriétés avant d'extraire
+            - Nécessite .NET 10 Runtime
+            
+            ## 🔄 Changements
+            Voir l'historique des commits pour plus de détails des modifications.
+            
+            ## 🎨 Fonctionnalités
+            - 📊 Suivi des jetons de cours
+            - 🧪 Éditeur de potions
+            - 🌿 Gestion des ingrédients
+            - 💾 Sauvegarde automatique
+            
+            ---
+            Version: ${{ github.ref_name }}
+            Date: ${{ github.event.head_commit.timestamp }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

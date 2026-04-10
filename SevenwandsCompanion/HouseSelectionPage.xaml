@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="SevenwandsCompanion.HouseSelectionPage"
+             BackgroundColor="{DynamicResource BackgroundDark}"
+             Shell.NavBarIsVisible="False">
+
+    <Grid Padding="20" RowDefinitions="Auto, *, Auto">
+        
+        <!-- En-tête -->
+        <VerticalStackLayout Grid.Row="0" Spacing="10" Margin="0,40,0,20">
+            <Label Text="🏰 Bienvenue à l'Académie" 
+                   FontSize="28" 
+                   FontAttributes="Bold"
+                   TextColor="{StaticResource AccentGold}"
+                   HorizontalOptions="Center"/>
+            <Label Text="Choisis ta maison" 
+                   FontSize="20" 
+                   TextColor="{StaticResource TextPrimary}"
+                   HorizontalOptions="Center"/>
+            <Label Text="Ce choix déterminera les couleurs de ton interface" 
+                   FontSize="14" 
+                   TextColor="{StaticResource TextSecondary}"
+                   HorizontalOptions="Center"
+                   Margin="0,5,0,0"/>
+        </VerticalStackLayout>
+
+        <!-- Grille des maisons -->
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout x:Name="HousesContainer" Spacing="15">
+                <!-- Les maisons seront ajoutées dynamiquement -->
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- Bouton continuer (désactivé tant qu'aucune maison n'est choisie) -->
+        <Button Grid.Row="2"
+                x:Name="ContinueButton"
+                Text="Continuer"
+                FontSize="18"
+                FontAttributes="Bold"
+                BackgroundColor="{DynamicResource AccentGold}"
+                TextColor="Black"
+                CornerRadius="10"
+                HeightRequest="50"
+                IsEnabled="False"
+                Clicked="OnContinueClicked"
+                Margin="0,20,0,0"/>
+    </Grid>
+</ContentPage>

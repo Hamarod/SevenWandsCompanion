@@ -147,6 +147,19 @@ namespace SevenwandsCompanion
                 {
                     var years = SevenwandsTools.DeserializeTokenTracking(json);
                     Years.Clear();
+
+                    // Migration automatique : ajouter la 5ème année si elle manque
+                    bool needsMigration = years.Count < 5;
+                    if (needsMigration)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"⚠️ Migration needed: only {years.Count} years found, adding missing years...");
+                        years = await MigrateToLatestVersionAsync(years);
+
+                        // Sauvegarder immédiatement après la migration
+                        await SevenwandsTools.SaveTokenTrackingToJson(userDataPath, years);
+                        System.Diagnostics.Debug.WriteLine($"✅ Migration complete, saved {years.Count} years");
+                    }
+
                     foreach (var year in years)
                     {
                         // S'assurer que les événements de changement sont écoutés
@@ -154,14 +167,18 @@ namespace SevenwandsCompanion
                         Years.Add(year);
                     }
 
-                    // Sélectionner l'année 3 par défaut (index 2)
-                    if (Years.Count > 3)
+                    // Sélectionner automatiquement la première année non complétée
+                    var currentYear = Years.FirstOrDefault(y => !y.IsYearCompleted);
+                    if (currentYear != null)
                     {
-                        SelectedYear = Years.Last();
+                        SelectedYear = currentYear;
+                        System.Diagnostics.Debug.WriteLine($"✅ Selected current year: {currentYear.YearTitle} (not completed)");
                     }
-                    else if (Years.Count > 0)
+                    else
                     {
-                        SelectedYear = Years[0];
+                        // Toutes les années sont complétées, sélectionner la dernière
+                        SelectedYear = Years.LastOrDefault();
+                        System.Diagnostics.Debug.WriteLine($"✅ All years completed, selected last year: {SelectedYear?.YearTitle}");
                     }
 
                     System.Diagnostics.Debug.WriteLine($"Loaded {Years.Count} years successfully");
@@ -294,6 +311,51 @@ namespace SevenwandsCompanion
                 IsSaving = false;
                 System.Diagnostics.Debug.WriteLine($"❌ Error saving TokenTracking data: {ex.Message}");
                 await DisplayAlert("Erreur", $"Impossible de sauvegarder les données: {ex.Message}", "OK");
+            }
+        }
+
+        /// <summary>
+        /// Migre les données vers la dernière version en ajoutant les années manquantes
+        /// </summary>
+        private async Task<List<YearData>> MigrateToLatestVersionAsync(List<YearData> existingYears)
+        {
+            try
+            {
+                // Charger le fichier par défaut pour obtenir le template des années manquantes
+                var defaultJson = await LoadAssetAsStringAsync(TokenTrackingAssetPath);
+                var defaultYears = SevenwandsTools.DeserializeTokenTracking(defaultJson);
+
+                // Ajouter les années manquantes
+                for (int yearNumber = existingYears.Count + 1; yearNumber <= defaultYears.Count; yearNumber++)
+                {
+                    var templateYear = defaultYears.FirstOrDefault(y => y.Year == yearNumber);
+                    if (templateYear != null)
+                    {
+                        // Créer une nouvelle année avec tous les points à 0
+                        var newYear = new YearData
+                        {
+                            Year = templateYear.Year,
+                            Courses = templateYear.Courses.Select(c => new Course
+                            {
+                                Id = c.Id,
+                                Name = c.Name,
+                                CurrentPoints = 0,
+                                RequiredPoints = c.RequiredPoints,
+                                Icon = c.Icon
+                            }).ToList()
+                        };
+
+                        existingYears.Add(newYear);
+                        System.Diagnostics.Debug.WriteLine($"✅ Added {newYear.YearTitle} with {newYear.Courses.Count} courses");
+                    }
+                }
+
+                return existingYears;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"❌ Migration error: {ex.Message}");
+                return existingYears;
             }
         }
 

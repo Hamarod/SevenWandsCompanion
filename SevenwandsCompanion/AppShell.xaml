@@ -52,10 +52,17 @@
     </Shell.Resources>
 
     <!-- Items de navigation -->
-    <FlyoutItem Title="Suivi des Jetons">
+
+    <!-- Sélection de maison (caché par défaut) -->
+    <ShellContent
+        x:Name="HouseSelectionRoute"
+        ContentTemplate="{DataTemplate local:HouseSelectionPage}"
+        Route="HouseSelection"
+        Shell.FlyoutItemIsVisible="False"/>
+
+    <FlyoutItem Title="Suivi des Jetons" Route="TokenTracking">
         <ShellContent
                       ContentTemplate="{DataTemplate local:TokenTrackingPage}"
-                      Route="TokenTrackingPage"
                       Shell.NavBarIsVisible="False">
             <ShellContent.Icon>
                 <FontImageSource Glyph="📊" 
@@ -73,6 +80,20 @@
                       Shell.NavBarIsVisible="False">
             <ShellContent.Icon>
                 <FontImageSource Glyph="🧪" 
+                                 FontFamily="Segoe UI Emoji" 
+                                 Color="#D4AF37"
+                                 Size="24"/>
+            </ShellContent.Icon>
+        </ShellContent>
+    </FlyoutItem>
+
+    <FlyoutItem Title="Paramètres">
+        <ShellContent
+                      ContentTemplate="{DataTemplate local:SettingsPage}"
+                      Route="Settings"
+                      Shell.NavBarIsVisible="False">
+            <ShellContent.Icon>
+                <FontImageSource Glyph="⚙️" 
                                  FontFamily="Segoe UI Emoji" 
                                  Color="#D4AF37"
                                  Size="24"/>

@@ -183,6 +183,9 @@ namespace SevenwandsConsoleTool
         [JsonIgnore]
         public int HighPriorityCount => Courses?.Count(c => !c.IsCompleted && c.Progress < 0.5) ?? 0;
 
+        [JsonIgnore]
+        public bool IsYearCompleted => Courses?.All(c => c.IsCompleted) ?? false;
+
         public event PropertyChangedEventHandler PropertyChanged;
 
         protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
@@ -200,6 +203,7 @@ namespace SevenwandsConsoleTool
             OnPropertyChanged(nameof(TotalProgressText));
             OnPropertyChanged(nameof(CompletedCoursesText));
             OnPropertyChanged(nameof(HighPriorityCount));
+            OnPropertyChanged(nameof(IsYearCompleted));
         }
 
         /// <summary>
@@ -223,5 +227,8 @@ namespace SevenwandsConsoleTool
     public class TokenTrackingData
     {
         public List<YearData> Years { get; set; } = new List<YearData>();
+
+        [JsonPropertyName("selectedHouse")]
+        public string SelectedHouse { get; set; } = string.Empty;
     }
 }

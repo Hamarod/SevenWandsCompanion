@@ -361,3 +361,11 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+# Android Keystores - CRITICAL: Never commit these!
+*.keystore
+*.jks
+keystore_*.txt
+my-release-key.*
+
+# Guide de déploiement - Ne pas commiter
+.github/DEPLOYMENT_GUIDE.md

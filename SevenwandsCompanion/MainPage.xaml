@@ -2,7 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="SevenwandsCompanion.MainPage"
-             BackgroundColor="{StaticResource BackgroundDark}">
+             BackgroundColor="{DynamicResource BackgroundDark}">
 
     <Grid Padding="20" RowDefinitions="Auto, *" RowSpacing="20">
 
@@ -30,7 +30,7 @@
                     <Button Grid.Column="0"
                             Text="➕ Nouvelle"
                             FontSize="12"
-                            BackgroundColor="{StaticResource AccentGreen}"
+                            BackgroundColor="{DynamicResource ButtonBackground}"
                             TextColor="White"
                             CornerRadius="6"
                             Padding="10,8"
@@ -38,7 +38,7 @@
                     <Button Grid.Column="1"
                             Text="✏️ Modifier"
                             FontSize="12"
-                            BackgroundColor="{StaticResource AccentOrange}"
+                            BackgroundColor="{DynamicResource ButtonBackground}"
                             TextColor="White"
                             CornerRadius="6"
                             Padding="10,8"
@@ -84,7 +84,7 @@
                                             </VisualState>
                                             <VisualState Name="Selected">
                                                 <VisualState.Setters>
-                                                    <Setter Property="BackgroundColor" Value="{StaticResource ButtonBackground}" />
+                                                    <Setter Property="BackgroundColor" Value="{DynamicResource ButtonBackground}" />
                                                 </VisualState.Setters>
                                             </VisualState>
                                         </VisualStateGroup>
@@ -149,7 +149,7 @@
                                FontSize="12"/>
                         <Label Grid.Row="1"
                                Text="{Binding DisplayedCost, StringFormat='{0} Gallyons'}" 
-                               TextColor="{StaticResource AccentOrange}" 
+                               TextColor="{StaticResource TextPrimary}" 
                                FontAttributes="Bold"
                                FontSize="20" />
                     </Grid>
@@ -214,7 +214,7 @@
                         </Grid>
                         <Label Grid.Row="3"
                                Text="{Binding DisplayedBenefits, StringFormat='{0} Gallyons'}" 
-                               TextColor="{StaticResource AccentGreen}" 
+                               TextColor="{StaticResource TextPrimary}" 
                                FontAttributes="Bold" 
                                FontSize="16"
                                Margin="24,0,0,0"/>
@@ -233,7 +233,7 @@
                         </Grid>
                         <Label Grid.Row="5"
                                Text="{Binding DisplayedExperience, StringFormat='{0} XP'}" 
-                               TextColor="{StaticResource AccentBlue}" 
+                               TextColor="{StaticResource TextPrimary}" 
                                FontAttributes="Bold" 
                                FontSize="16"
                                Margin="24,0,0,0"/>

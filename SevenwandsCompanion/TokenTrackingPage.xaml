@@ -2,7 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="SevenwandsCompanion.TokenTrackingPage"
-             BackgroundColor="{StaticResource BackgroundDark}">
+             BackgroundColor="{DynamicResource BackgroundDark}">
 
     <Grid Padding="20" RowDefinitions="Auto, Auto, Auto, *" RowSpacing="20">
 
@@ -14,7 +14,7 @@
                        HorizontalOptions="Start"/>
                 <Label Text="Gérez votre progression académique" 
                        FontSize="14" 
-                       TextColor="{StaticResource TextSecondary}"/>
+                       TextColor="{DynamicResource TextSecondary}"/>
             </VerticalStackLayout>
 
             <!-- Indicateur de sauvegarde -->
@@ -24,12 +24,12 @@
                                    Margin="0,0,10,0"
                                    IsVisible="{Binding IsSaving}">
                 <ActivityIndicator IsRunning="{Binding IsSaving}"
-                                   Color="{StaticResource AccentGold}"
+                                   Color="{DynamicResource AccentGold}"
                                    WidthRequest="20"
                                    HeightRequest="20"/>
                 <Label Text="Sauvegarde..."
                        FontSize="12"
-                       TextColor="{StaticResource AccentGold}"
+                       TextColor="{DynamicResource AccentGold}"
                        VerticalOptions="Center"/>
             </HorizontalStackLayout>
 
@@ -38,8 +38,8 @@
                     FontSize="20"
                     WidthRequest="50"
                     HeightRequest="50"
-                    BackgroundColor="{StaticResource ButtonBackground}"
-                    TextColor="{StaticResource AccentGold}"
+                    BackgroundColor="{DynamicResource AccentRed}"
+                    TextColor="White"
                     CornerRadius="25"
                     Clicked="OnResetClicked"
                     VerticalOptions="Center"
@@ -71,7 +71,7 @@
                                Style="{StaticResource ValueLabelStyle}"/>
                         <Label Text="Progression" 
                                FontSize="12" 
-                               TextColor="{StaticResource TextSecondary}" 
+                               TextColor="{DynamicResource TextSecondary}" 
                                HorizontalOptions="Center"/>
                     </VerticalStackLayout>
                 </Grid>
@@ -88,7 +88,7 @@
                                Style="{StaticResource ValueLabelStyle}"/>
                         <Label Text="Cours Complétés" 
                                FontSize="12" 
-                               TextColor="{StaticResource TextSecondary}" 
+                               TextColor="{DynamicResource TextSecondary}" 
                                HorizontalOptions="Center"/>
                     </VerticalStackLayout>
                 </Grid>
@@ -105,7 +105,7 @@
                                Style="{StaticResource ValueLabelStyle}"/>
                         <Label Text="Total Cours" 
                                FontSize="12" 
-                               TextColor="{StaticResource TextSecondary}" 
+                               TextColor="{DynamicResource TextSecondary}" 
                                HorizontalOptions="Center"/>
                     </VerticalStackLayout>
                 </Grid>
@@ -122,7 +122,7 @@
                                Style="{StaticResource ValueLabelStyle}"/>
                         <Label Text="Haute Priorité" 
                                FontSize="12" 
-                               TextColor="{StaticResource TextSecondary}" 
+                               TextColor="{DynamicResource TextSecondary}" 
                                HorizontalOptions="Center"/>
                     </VerticalStackLayout>
                 </Grid>
@@ -138,11 +138,11 @@
                     <Label Text="{Binding SelectedYear.YearTitle}" 
                            FontSize="18" 
                            FontAttributes="Bold" 
-                           TextColor="{StaticResource AccentGold}"/>
+                           TextColor="{DynamicResource AccentGold}"/>
                     <Label Grid.Column="1" 
                            Text="{Binding SelectedYear.TotalProgressText}" 
                            FontSize="16" 
-                           TextColor="{StaticResource TextPrimary}" 
+                           TextColor="{DynamicResource TextPrimary}" 
                            HorizontalOptions="End"
                            VerticalOptions="Center"/>
                 </Grid>
@@ -152,7 +152,7 @@
 
                 <Label Text="{Binding SelectedYear.CompletedCoursesText}" 
                        FontSize="12" 
-                       TextColor="{StaticResource TextSecondary}"
+                       TextColor="{DynamicResource TextSecondary}"
                        Margin="0,0,0,10"/>
 
                 <!-- CollectionView avec layout en grille responsive -->
@@ -186,7 +186,7 @@
                                                Text="{Binding Name}" 
                                                FontSize="16" 
                                                FontAttributes="Bold" 
-                                               TextColor="{StaticResource TextPrimary}"
+                                               TextColor="{DynamicResource TextPrimary}"
                                                VerticalOptions="Center"
                                                LineBreakMode="WordWrap"/>
                                     </Grid>
@@ -195,7 +195,7 @@
                                     <Label Grid.Row="1" 
                                            Text="{Binding StatusText}" 
                                            FontSize="12" 
-                                           TextColor="{StaticResource TextSecondary}"/>
+                                           TextColor="{DynamicResource TextSecondary}"/>
 
                                     <!-- Barre de progression -->
                                     <ProgressBar Grid.Row="2" 
@@ -209,12 +209,12 @@
                                                Text="{Binding CurrentPoints}" 
                                                FontSize="22" 
                                                FontAttributes="Bold" 
-                                               TextColor="{StaticResource AccentOrange}"
+                                               TextColor="{DynamicResource AccentOrange}"
                                                VerticalOptions="Center"/>
                                         <Label Grid.Column="1"
                                                Text="{Binding TotalPointsText, StringFormat=' / {0}'}" 
                                                FontSize="12" 
-                                               TextColor="{StaticResource TextSecondary}"
+                                               TextColor="{DynamicResource TextSecondary}"
                                                VerticalOptions="End"
                                                Margin="0,0,0,5"/>
                                     </Grid>
@@ -237,8 +237,8 @@
                                                 Text="+2" 
                                                 WidthRequest="50"
                                                 HeightRequest="40"
-                                                BackgroundColor="{StaticResource ButtonBackground}"
-                                                TextColor="{StaticResource TextPrimary}"
+                                                BackgroundColor="{DynamicResource ButtonBackgroundHover}"
+                                                TextColor="{DynamicResource ButtonText}"
                                                 CornerRadius="8"
                                                 CommandParameter="{Binding .}"
                                                 Clicked="OnIncrement2Clicked"/>
@@ -247,8 +247,8 @@
                                                 Text="+5" 
                                                 WidthRequest="50"
                                                 HeightRequest="40"
-                                                BackgroundColor="{StaticResource ButtonBackground}"
-                                                TextColor="{StaticResource TextPrimary}"
+                                                BackgroundColor="{DynamicResource ButtonBackgroundHover}"
+                                                TextColor="{DynamicResource ButtonText}"
                                                 CornerRadius="8"
                                                 CommandParameter="{Binding .}"
                                                 Clicked="OnIncrement5Clicked"/>

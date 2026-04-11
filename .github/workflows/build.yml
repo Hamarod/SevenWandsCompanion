@@ -34,3 +34,14 @@ jobs:
         name: windows-build
         path: |
           SevenwandsCompanion/bin/Release/net10.0-windows10.0.19041.0/
+
+    - name: Create Release
+      if: startsWith(github.ref, 'refs/tags/v') # Ne s'exécute que si tu crées un tag
+      uses: softprops/action-gh-release@v2
+      with:
+        files: |
+          SevenwandsCompanion/bin/Release/net10.0-windows10.0.19041.0/win10-x64/publish/*
+        name: SevenWands Windows ${{ github.ref_name }}
+        body: "Version Windows de Sevenwands Companion."
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

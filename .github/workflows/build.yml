@@ -1,52 +1,64 @@
-name: .NET MAUI Build
+﻿name: .NET MAUI Build
 
 on:
   push:
     branches: [ master, main ]
+    tags:
+      - 'v*'
   pull_request:
     branches: [ master, main ]
 
 jobs:
   build-windows:
     runs-on: windows-latest
-
+    
     steps:
     - uses: actions/checkout@v4
-
+    
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: '10.0.x'
         dotnet-quality: 'preview'
-
+    
     - name: Install MAUI Workload
       run: dotnet workload install maui
-
+    
     - name: Build SevenwandsConsoleTool
       run: dotnet build SevenwandsConsoleTool/SevenwandsConsoleTool.csproj -c Release
-
+    
     - name: Build SevenwandsCompanion for Windows
       run: dotnet build SevenwandsCompanion/SevenwandsCompanion.csproj -c Release -f net10.0-windows10.0.19041.0
-
+    
     - name: Upload Windows Build Artifacts
       uses: actions/upload-artifact@v4
       with:
         name: windows-build
         path: |
           SevenwandsCompanion/bin/Release/net10.0-windows10.0.19041.0/
-
-    - name: Create Release and Upload Windows Build
+    
+    - name: Create Release with Latest Tag
+      if: startsWith(github.ref, 'refs/tags/v')
       uses: softprops/action-gh-release@v2
-      if: startsWith(github.ref, 'refs/tags/') # Ne se déclenche que sur un tag
       with:
-        files: |
-          SevenwandsCompanion/bin/Release/net10.0-windows10.0.19041.0/win10-x64/publish/*
+        tag_name: ${{ github.ref_name }}
         name: SevenWands Companion ${{ github.ref_name }}
-        tag_name: ${{ github.ref }}
         body: |
-          🎯 **Version Windows Officielle**
-          Cette version a été générée automatiquement.
+          🚀 **SevenWands Companion - Version ${{ github.ref_name }}**
+          
+          Build automatique depuis le tag ${{ github.ref_name }}.
+          
+          **Commit:** ${{ github.sha }}
+          **Date:** ${{ github.event.head_commit.timestamp }}
+          
+          ---
+          
+          📦 **Téléchargement Windows**
+          Téléchargez les fichiers ci-dessous pour installer l'application sur Windows.
         draft: false
         prerelease: false
+        make_latest: true
+        files: |
+          SevenwandsCompanion/bin/Release/net10.0-windows10.0.19041.0/**/*
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

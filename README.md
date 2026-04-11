@@ -124,7 +124,7 @@ Cette application est inspirée de [Bubulle - Kaldeo](https://kaldeo.alwaysdata.
 
 ## 📜 Informations
 
-**Version actuelle** : 1.1.0.8
+**Version actuelle** : 1.1.0.10
 **Développé pour** : La communauté Sevenwands  
 **Licence** : Tous droits réservés
 

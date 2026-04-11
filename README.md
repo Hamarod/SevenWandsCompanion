@@ -1,73 +1,139 @@
-# 🎯 SevenWands Companion
+﻿# ⚗️ SevenWands Companion
 
-**Application compagnon pour le jeu de société Sevenwands**
+> Votre compagnon magique pour le jeu **Sevenwands** !
 
-Gérez facilement vos potions, ingrédients et suivez votre progression académique avec cette application intuitive.
+[![Latest Release](https://img.shields.io/github/v/release/Hamarod/SevenWandsCompanion?label=Version)](https://github.com/Hamarod/SevenWandsCompanion/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/Hamarod/SevenWandsCompanion/total?label=Téléchargements)](https://github.com/Hamarod/SevenWandsCompanion/releases)
 
-> 💡 **Crédit** : L'inspiration pour la gestion des jetons vient de [Bubulle - Kaldeo](https://kaldeo.alwaysdata.net/jetons)
+Gérez vos potions, suivez votre progression académique et plongez dans l''univers de Sevenwands avec une application intuitive et élégante !
 
 ---
 
-## 📥 Téléchargement
+## 🎨 Choisissez Votre Maison !
 
-Téléchargez la dernière version depuis la page [Releases](https://github.com/Hamarod/SevenWandsCompanion/releases) :
+Au premier lancement, sélectionnez votre maison préférée. L''application s''adaptera automatiquement avec son thème de couleurs unique :
 
-- 📱 **Android** : Fichier `.apk` (Android 5.0+)
-- 🪟 **Windows** : Fichier `.zip` (Windows 10/11)
+| Maison | Thème | Symbole |
+|--------|-------|---------|
+| 🔥 **Lombrasier** | Rouge & Or | Phoenix |
+| 🐍 **Vervenin** | Vert & Argent | Serpent |
+| 🦉 **Briselune** | Bleu & Argent | Hibou |
+| 🦫 **Rongebois** | Marron & Jaune | Castor |
+
+> *Vous pouvez changer de maison à tout moment dans les paramètres !*
 
 ---
 
 ## ✨ Fonctionnalités
 
-### 📊 Suivi des Jetons
-- Suivez votre progression dans chaque cours
-- Visualisez vos statistiques par année
-- Incrémentez rapidement avec les boutons +1, +2, +5
-- Sauvegarde automatique de votre progression
+### 📊 **Suivi des Jetons**
+Suivez votre progression académique année par année :
+- ✅ 5 années complètes de cours
+- 🎯 7 matières par année (Alchimie, Sorts, Potions, Histoire, Créatures, Club, Divers)
+- 📈 Statistiques en temps réel
+- 💾 Sauvegarde automatique
+- 🔄 Boutons rapides (+1, +2, +5) pour gagner du temps
 
-### 🧪 Gestionnaire de Potions
-- Créez et éditez vos recettes de potions
-- Consultez les effets et ingrédients nécessaires
-- Interface élégante avec thème sombre
+L''application vous positionne automatiquement sur votre année en cours !
 
-### 🌿 Base d'Ingrédients
-- Parcourez tous les ingrédients disponibles
-- Consultez leurs propriétés et utilisations
+### 🧪 **Créateur de Potions**
+Gérez vos recettes comme un pro :
+- 📝 Créez et modifiez vos potions
+- 💰 Calculez les coûts et profits
+- 🔍 Recherche rapide
+- 🌿 Gestion complète des ingrédients
 
----
-
-## 🚀 Installation
-
-### Android 📱
-1. Téléchargez le fichier `.apk`
-2. Activez "Sources inconnues" dans les paramètres
-3. Installez l'application
-
-### Windows 🪟
-1. Téléchargez le fichier `.zip`
-2. Clic droit → Propriétés → Décochez "Bloquer"
-3. Extrayez le contenu
-4. Lancez l'exécutable
+### ⚙️ **Personnalisation**
+- 🏰 Changez de maison quand vous voulez
+- 🎨 Thème adaptatif selon votre choix
+- 🔄 Réinitialisation facile des données
 
 ---
 
-## 🤝 Contribution
+## 📥 Téléchargement
 
-Les contributions sont les bienvenues ! N'hésitez pas à :
-- Signaler des bugs via les [Issues](https://github.com/Hamarod/SevenWandsCompanion/issues)
-- Proposer de nouvelles fonctionnalités
-- Soumettre des pull requests
+### 🪟 **Windows** (version actuelle)
+
+1. Rendez-vous sur la [page des releases](https://github.com/Hamarod/SevenWandsCompanion/releases/latest)
+2. Téléchargez le fichier pour Windows
+3. Extrayez et lancez l''application
+
+> **💡 Astuce** : Si Windows affiche un avertissement, cliquez sur "Informations complémentaires" → "Exécuter quand même"
+
+### 📱 **Android, iOS, macOS** 
+> ⏳ Bientôt disponible !
 
 ---
 
-## 📄 Licence
+## 🎮 Guide Rapide
 
-Projet personnel - Tous droits réservés
+### 1️⃣ **Premier Lancement**
+- Choisissez votre maison favorite
+- Le thème de couleurs s''applique instantanément
+
+### 2️⃣ **Suivi des Jetons**
+- Sélectionnez votre année dans le menu déroulant
+- Utilisez **+** et **-** pour ajuster vos points
+- Les boutons **+2** et **+5** pour aller plus vite
+- Tout est sauvegardé automatiquement ✨
+
+### 3️⃣ **Potions**
+- Parcourez vos recettes dans la liste
+- Ajustez les quantités
+- Créez de nouvelles potions avec **➕ Nouvelle**
+- Modifiez vos recettes avec **✏️ Modifier**
+
+### 4️⃣ **Paramètres**
+- Changez de maison
+- Réinitialisez vos données (⚠️ attention, tout sera effacé !)
 
 ---
 
-## 🔗 Liens Utiles
+## ❓ Questions Fréquentes
 
-- [Releases](https://github.com/Hamarod/SevenWandsCompanion/releases) - Téléchargez l'application
-- [Issues](https://github.com/Hamarod/SevenWandsCompanion/issues) - Signalez un problème
-- [Kaldeo - Bubulle](https://kaldeo.alwaysdata.net/jetons) - Inspiration originale (peut être plus disponible)
+### 💾 **Mes données sont-elles sauvegardées ?**
+Oui ! Tout est sauvegardé automatiquement à chaque modification.
+
+### 🏰 **Puis-je changer de maison ?**
+Absolument ! Allez dans **Paramètres** → **Changer** dans la section "Ma Maison".
+
+### 🔄 **Comment réinitialiser mes données ?**
+Dans **Paramètres** → **Réinitialiser toutes les données** (cette action est irréversible).
+
+### 🆕 **Comment obtenir la dernière version ?**
+Consultez la [page des releases](https://github.com/Hamarod/SevenWandsCompanion/releases/latest) pour télécharger la version la plus récente.
+
+---
+
+## 🐛 Besoin d''aide ?
+
+### Un problème ?
+1. Vérifiez que vous avez la [dernière version](https://github.com/Hamarod/SevenWandsCompanion/releases/latest)
+2. Signalez le problème dans les [Issues](https://github.com/Hamarod/SevenWandsCompanion/issues)
+
+### Une suggestion ?
+N''hésitez pas à partager vos idées dans les [Issues](https://github.com/Hamarod/SevenWandsCompanion/issues) avec le tag `suggestion` !
+
+---
+
+## 💡 Inspiration
+
+Cette application est inspirée de [Bubulle - Kaldeo](https://kaldeo.alwaysdata.net/jetons) pour la gestion des jetons.
+
+---
+
+## 📜 Informations
+
+**Version actuelle** : 1.1.0.8
+**Développé pour** : La communauté Sevenwands  
+**Licence** : Tous droits réservés
+
+---
+
+<div align="center">
+
+**Fait avec ❤️ pour les joueurs de Sevenwands**
+
+[📥 Télécharger](https://github.com/Hamarod/SevenWandsCompanion/releases/latest) • [🐛 Signaler un Bug](https://github.com/Hamarod/SevenWandsCompanion/issues) • [💡 Suggestions](https://github.com/Hamarod/SevenWandsCompanion/issues)
+
+</div>

@@ -17,7 +17,7 @@
 
     <!-- Couleurs d'accent -->
     <Color x:Key="AccentGold">#D4AF37</Color>
-    <Color x:Key="AccentOrange">#DC2626</Color>
+    <Color x:Key="AccentOrange">#D4AF37</Color>
     <Color x:Key="AccentRed">#8B0000</Color>
     <Color x:Key="AccentSecondary">#D4AF37</Color>
 

@@ -209,7 +209,7 @@
                                                Text="{Binding CurrentPoints}" 
                                                FontSize="22" 
                                                FontAttributes="Bold" 
-                                               TextColor="{DynamicResource AccentOrange}"
+                                               TextColor="{DynamicResource TextSecondary}"
                                                VerticalOptions="Center"/>
                                         <Label Grid.Column="1"
                                                Text="{Binding TotalPointsText, StringFormat=' / {0}'}" 

@@ -28,6 +28,9 @@ namespace SevenwandsCompanion
             {
                 System.Diagnostics.Debug.WriteLine("❌ No house selected, will redirect to selection");
             }
+
+            // Charger les compétences du personnage au démarrage de l'app
+            await CompetenceService.Instance.ChargerCompetencesAsync();
         }
 
         protected override Window CreateWindow(IActivationState? activationState)

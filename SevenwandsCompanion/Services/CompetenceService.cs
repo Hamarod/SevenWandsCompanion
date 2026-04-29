@@ -13,6 +13,7 @@ namespace SevenwandsCompanion.Services
     {
         private const string SettingsFileName = "PersonnageSettings.json";
         private static CompetenceService _instance;
+        private bool _isLoaded = false; // Flag pour éviter les chargements multiples
 
         public static CompetenceService Instance => _instance ??= new CompetenceService();
 
@@ -65,7 +66,8 @@ namespace SevenwandsCompanion.Services
         private CompetenceService()
         {
             Competences = new ObservableCollection<CompetenceViewModel>();
-            InitialiserCompetencesParDefaut();
+            // NE PAS initialiser ici - le chargement se fera via ChargerCompetencesAsync()
+            // qui initialise par défaut uniquement si aucun fichier n'existe
         }
 
         /// <summary>
@@ -116,6 +118,14 @@ namespace SevenwandsCompanion.Services
         /// </summary>
         public async Task ChargerCompetencesAsync()
         {
+            // Si déjà chargé, ne rien faire sauf rafraîchir l'année
+            if (_isLoaded)
+            {
+                System.Diagnostics.Debug.WriteLine("ℹ️ Compétences déjà chargées, rafraîchissement de l'année uniquement");
+                await RefreshAnneeFromTokensAsync();
+                return;
+            }
+
             try
             {
                 var settingsPath = Path.Combine(FileSystem.AppDataDirectory, SettingsFileName);
@@ -148,16 +158,35 @@ namespace SevenwandsCompanion.Services
                                         Couleur = comp.Couleur
                                     });
                                 }
+
+                                System.Diagnostics.Debug.WriteLine($"✅ Personnage chargé depuis fichier: {Prenom} {Nom}, {Competences.Count} compétences");
+                            }
+                            else
+                            {
+                                // Fichier existe mais pas de compétences : initialiser par défaut
+                                System.Diagnostics.Debug.WriteLine("⚠️ Fichier existe mais aucune compétence trouvée, initialisation par défaut");
+                                InitialiserCompetencesParDefaut();
+                                await SauvegarderCompetencesAsync();
                             }
                         }
+                    }
+                    else
+                    {
+                        // Fichier existe mais est vide : initialiser par défaut
+                        System.Diagnostics.Debug.WriteLine("⚠️ Fichier existe mais est vide, initialisation par défaut");
+                        InitialiserCompetencesParDefaut();
+                        await SauvegarderCompetencesAsync();
                     }
                 }
                 else
                 {
-                    // Nouveau utilisateur : créer un fichier par défaut
-                    System.Diagnostics.Debug.WriteLine("📝 Nouveau utilisateur détecté, création du fichier personnage par défaut");
+                    // Nouveau utilisateur : initialiser avec valeurs par défaut et créer le fichier
+                    System.Diagnostics.Debug.WriteLine("📝 Nouveau utilisateur détecté, initialisation des compétences par défaut");
+                    InitialiserCompetencesParDefaut();
                     await SauvegarderCompetencesAsync();
                 }
+
+                _isLoaded = true; // Marquer comme chargé
 
                 // TOUJOURS calculer l'année depuis les jetons après le chargement
                 await RefreshAnneeFromTokensAsync();
@@ -165,7 +194,12 @@ namespace SevenwandsCompanion.Services
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"❌ Erreur chargement compétences: {ex.Message}");
-                // En cas d'erreur, garder les valeurs par défaut déjà initialisées
+                // En cas d'erreur et si les compétences sont vides, initialiser par défaut
+                if (Competences.Count == 0)
+                {
+                    InitialiserCompetencesParDefaut();
+                }
+                _isLoaded = true; // Marquer comme chargé même en cas d'erreur
                 await RefreshAnneeFromTokensAsync();
             }
         }
@@ -224,6 +258,19 @@ namespace SevenwandsCompanion.Services
         protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        /// <summary>
+        /// Force la réinitialisation des compétences (pour le débogage ou la récupération d'erreur)
+        /// </summary>
+        public async Task ReinitialiserCompetencesAsync()
+        {
+            System.Diagnostics.Debug.WriteLine("🔄 Réinitialisation forcée des compétences");
+            InitialiserCompetencesParDefaut();
+            Prenom = string.Empty;
+            Nom = string.Empty;
+            await SauvegarderCompetencesAsync();
+            _isLoaded = true;
         }
 
         /// <summary>

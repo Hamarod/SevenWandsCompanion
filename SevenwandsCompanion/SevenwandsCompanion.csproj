@@ -36,8 +36,8 @@
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">21.0</SupportedOSPlatformVersion>
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</SupportedOSPlatformVersion>
 		<TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
-		<AssemblyVersion>1.1.0.11</AssemblyVersion>
-		<FileVersion>1.1.0.11</FileVersion>
+		<AssemblyVersion>1.1.1.0</AssemblyVersion>
+		<FileVersion>1.1.1.0</FileVersion>
 		<PackageIcon>potionmakericon.svg</PackageIcon>
 	</PropertyGroup>
 
@@ -49,7 +49,7 @@
 		<MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#512BD4" BaseSize="128,128" />
 
 		<!-- Images -->
-		<MauiImage Include="Resources\Images\*" />
+		<MauiImage Include="Resources\Images\*" Resize="False" />
 		<MauiImage Update="Resources\Images\dotnet_bot.png" Resize="True" BaseSize="300,185" />
 		
 		<!-- Custom Fonts -->
@@ -60,9 +60,10 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Microsoft.Maui.Controls" Version="10.0.0-*" />
-		<PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="10.0.0-*" />
+		<PackageReference Include="Microsoft.Maui.Controls" Version="10.0.51" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.0" />
+		<PackageReference Include="Microsoft.Maui.Graphics" Version="10.0.51" />
+		<PackageReference Include="Microsoft.Maui.Graphics.Skia" Version="10.0.51" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -83,6 +84,9 @@
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
 	  <MauiXaml Update="IngredientEditorPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="PersonnagePage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
 	  <MauiXaml Update="PotionEditorPage.xaml">
@@ -129,6 +133,10 @@
 	  <None Update="Resources\Raw\Potions.json">
 		<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </None>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="Docs\" />
 	</ItemGroup>
 
 </Project>

@@ -44,6 +44,26 @@
                 </VerticalStackLayout>
             </Border>
 
+            <!-- Section Personnage -->
+            <Border Style="{StaticResource CardStyle}" Padding="20">
+                <VerticalStackLayout Spacing="15">
+                    <Label Text="⚔️ Mon Personnage" 
+                           FontSize="18" 
+                           FontAttributes="Bold" 
+                           TextColor="{StaticResource AccentGold}"/>
+
+                    <Label Text="Gère tes compétences et caractéristiques" 
+                           FontSize="14" 
+                           TextColor="{StaticResource TextSecondary}"/>
+
+                    <Button Text="📊 Gérer mes compétences"
+                            BackgroundColor="{DynamicResource ButtonBackground}"
+                            TextColor="{DynamicResource TextPrimary}"
+                            CornerRadius="8"
+                            Clicked="OnGererCompetencesClicked"/>
+                </VerticalStackLayout>
+            </Border>
+
             <!-- Section Données -->
             <Border Style="{StaticResource CardStyle}" Padding="20">
                 <VerticalStackLayout Spacing="15">
@@ -62,6 +82,19 @@
                            FontSize="12" 
                            TextColor="{StaticResource TextSecondary}"
                            HorizontalOptions="Center"/>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Section Données -->
+            <Border Style="{StaticResource CardStyle}" Padding="20">
+                <VerticalStackLayout Spacing="15">
+                    <!-- Exemple de bouton dans ta SettingsPage.xaml -->
+                    <Button x:Name="BtnGenererCarte"
+                        Text="Générer ma carte d'étudiant"
+                        Clicked="OnGenererCarteClicked"
+                        BackgroundColor="{StaticResource Primary}"
+                        TextColor="White"
+                        Margin="20" />
                 </VerticalStackLayout>
             </Border>
         </VerticalStackLayout>

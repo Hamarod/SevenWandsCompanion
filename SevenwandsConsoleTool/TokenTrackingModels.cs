@@ -26,6 +26,7 @@ namespace SevenwandsConsoleTool
                     OnPropertyChanged();
                     OnPropertyChanged(nameof(Progress));
                     OnPropertyChanged(nameof(RemainingPoints));
+                    OnPropertyChanged(nameof(RemainingTokensText));
                     OnPropertyChanged(nameof(ProgressText));
                     OnPropertyChanged(nameof(RemainingText));
                     OnPropertyChanged(nameof(IsCompleted));
@@ -46,6 +47,17 @@ namespace SevenwandsConsoleTool
 
         [JsonIgnore]
         public int RemainingPoints => Math.Max(0, RequiredPoints - CurrentPoints);
+
+        [JsonIgnore]
+        public string RemainingTokensText
+        {
+            get
+            {
+                int remaining = RemainingPoints;
+                int tokensNeeded = (int)Math.Ceiling(remaining / 2.0);
+                return $" ({remaining}/{tokensNeeded})";
+            }
+        }
 
         [JsonIgnore]
         public string ProgressText => $"{CurrentPoints} / {RequiredPoints}";

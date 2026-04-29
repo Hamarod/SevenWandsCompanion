@@ -15,6 +15,10 @@ namespace SevenwandsCompanion
                     fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
                 });
 
+            // Register services for dependency injection
+            builder.Services.AddSingleton<SevenwandsCompanion.Services.ThemeService>();
+            builder.Services.AddSingleton<SevenwandsCompanion.Services.CarteService>();
+
 #if DEBUG
     		builder.Logging.AddDebug();
 #endif

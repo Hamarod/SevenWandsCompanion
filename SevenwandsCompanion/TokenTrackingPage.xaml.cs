@@ -20,6 +20,7 @@ namespace SevenwandsCompanion
                     _selectedYear = value;
                     OnPropertyChanged();
                     UpdateStatistics();
+                    BuildCoursesGrid(); // Reconstruire la grille quand l'année change
                 }
             }
         }
@@ -217,6 +218,221 @@ namespace SevenwandsCompanion
             }
         }
 
+        /// <summary>
+        /// Construit dynamiquement la grille des cours pour qu'elle soit responsive
+        /// Affiche les cours sur 2 lignes pour élargir chaque carte
+        /// </summary>
+        private void BuildCoursesGrid()
+        {
+            if (CoursesGrid == null || SelectedYear?.Courses == null)
+                return;
+
+            CoursesGrid.Children.Clear();
+            CoursesGrid.ColumnDefinitions.Clear();
+            CoursesGrid.RowDefinitions.Clear();
+
+            var courses = SelectedYear.Courses;
+            int courseCount = courses.Count;
+
+            // Calculer le nombre de colonnes (moitié des cours, arrondi vers le haut)
+            int columnsCount = (int)Math.Ceiling(courseCount / 2.0);
+
+            // Créer 2 lignes
+            CoursesGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+            CoursesGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+
+            // Créer les colonnes (répartition égale)
+            for (int i = 0; i < columnsCount; i++)
+            {
+                CoursesGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            }
+
+            // Placer les cours sur la grille
+            for (int i = 0; i < courseCount; i++)
+            {
+                var course = courses[i];
+                var card = CreateCourseCard(course);
+
+                // Première ligne: indices 0 à columnsCount-1
+                // Deuxième ligne: indices columnsCount à courseCount-1
+                int row = i < columnsCount ? 0 : 1;
+                int col = i < columnsCount ? i : i - columnsCount;
+
+                Grid.SetRow(card, row);
+                Grid.SetColumn(card, col);
+                CoursesGrid.Children.Add(card);
+            }
+
+            System.Diagnostics.Debug.WriteLine($"✅ Grille créée avec {columnsCount} colonnes × 2 lignes (total: {courseCount} cours)");
+        }
+
+        /// <summary>
+        /// Crée une carte de cours compacte
+        /// </summary>
+        private Border CreateCourseCard(Course course)
+        {
+            var border = new Border
+            {
+                Style = (Style)Application.Current.Resources["CardStyle"],
+                VerticalOptions = LayoutOptions.Fill,
+                HorizontalOptions = LayoutOptions.Fill
+            };
+
+            var mainGrid = new Grid
+            {
+                Padding = 8,
+                RowSpacing = 5,
+                RowDefinitions =
+                {
+                    new RowDefinition { Height = GridLength.Auto },
+                    new RowDefinition { Height = GridLength.Auto },
+                    new RowDefinition { Height = GridLength.Auto },
+                    new RowDefinition { Height = GridLength.Auto },
+                    new RowDefinition { Height = GridLength.Auto }
+                }
+            };
+
+            // Icône
+            var icon = new Label
+            {
+                Text = course.Icon,
+                FontSize = 34, // +2 unités
+                HorizontalOptions = LayoutOptions.Center,
+                Margin = new Thickness(0, 0, 0, 3)
+            };
+            Grid.SetRow(icon, 0);
+            mainGrid.Children.Add(icon);
+
+            // Nom du cours
+            var name = new Label
+            {
+                Text = course.Name,
+                FontSize = 12, // +2 unités
+                FontAttributes = FontAttributes.Bold,
+                TextColor = (Color)Application.Current.Resources["TextPrimary"],
+                HorizontalOptions = LayoutOptions.Center,
+                HorizontalTextAlignment = TextAlignment.Center,
+                LineBreakMode = LineBreakMode.WordWrap,
+                MaxLines = 2,
+                HeightRequest = 32 // Ajusté pour la plus grande police
+            };
+            name.SetBinding(Label.TextProperty, new Binding(nameof(course.Name), source: course));
+            Grid.SetRow(name, 1);
+            mainGrid.Children.Add(name);
+
+            // Barre de progression
+            var progressBar = new ProgressBar
+            {
+                ProgressColor = (Color)Application.Current.Resources["AccentGold"],
+                BackgroundColor = (Color)Application.Current.Resources["BackgroundCard"],
+                HeightRequest = 8,
+                Margin = new Thickness(0, 2)
+            };
+            progressBar.SetBinding(ProgressBar.ProgressProperty, new Binding(nameof(course.Progress), source: course));
+            Grid.SetRow(progressBar, 2);
+            mainGrid.Children.Add(progressBar);
+
+            // Points avec points restants et valeur/2
+            var pointsStack = new HorizontalStackLayout
+            {
+                HorizontalOptions = LayoutOptions.Center,
+                Spacing = 3
+            };
+
+            var currentPoints = new Label
+            {
+                FontSize = 22, // +2 unités
+                FontAttributes = FontAttributes.Bold,
+                TextColor = (Color)Application.Current.Resources["AccentGold"]
+            };
+            currentPoints.SetBinding(Label.TextProperty, new Binding(nameof(course.CurrentPoints), source: course));
+            pointsStack.Children.Add(currentPoints);
+
+            pointsStack.Children.Add(new Label
+            {
+                Text = "/",
+                FontSize = 13, // +2 unités
+                TextColor = (Color)Application.Current.Resources["TextSecondary"],
+                VerticalOptions = LayoutOptions.Center
+            });
+
+            var requiredPoints = new Label
+            {
+                FontSize = 13, // +2 unités
+                TextColor = (Color)Application.Current.Resources["TextSecondary"],
+                VerticalOptions = LayoutOptions.End,
+                Margin = new Thickness(0, 0, 0, 3)
+            };
+            requiredPoints.SetBinding(Label.TextProperty, new Binding(nameof(course.RequiredPoints), source: course));
+            pointsStack.Children.Add(requiredPoints);
+
+            // Restant (cours_restant/tokens_nécessaires)
+            var remainingLabel = new Label
+            {
+                FontSize = 11, // +2 unités
+                TextColor = (Color)Application.Current.Resources["TextSecondary"],
+                VerticalOptions = LayoutOptions.End,
+                Margin = new Thickness(0, 0, 0, 3)
+            };
+            // Bind directement sur la propriété calculée du modèle
+            remainingLabel.SetBinding(Label.TextProperty, new Binding(nameof(course.RemainingTokensText), source: course));
+            pointsStack.Children.Add(remainingLabel);
+
+            Grid.SetRow(pointsStack, 3);
+            mainGrid.Children.Add(pointsStack);
+
+            // Boutons
+            var buttonGrid = new Grid
+            {
+                RowSpacing = 3,
+                ColumnSpacing = 3,
+                Margin = new Thickness(0, 3, 0, 0),
+                RowDefinitions =
+                {
+                    new RowDefinition { Height = new GridLength(1, GridUnitType.Star) },
+                    new RowDefinition { Height = new GridLength(1, GridUnitType.Star) }
+                },
+                ColumnDefinitions =
+                {
+                    new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) },
+                    new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) }
+                }
+            };
+
+            buttonGrid.Children.Add(CreateButton("−", course, OnDecrementClicked, "AccentRed", 0, 0));
+            buttonGrid.Children.Add(CreateButton("+", course, OnIncrementClicked, "AccentGreen", 0, 1));
+            buttonGrid.Children.Add(CreateButton("+2", course, OnIncrement2Clicked, "AccentOrange", 1, 0));
+            buttonGrid.Children.Add(CreateButton("+5", course, OnIncrement5Clicked, "AccentBlue", 1, 1));
+
+            Grid.SetRow(buttonGrid, 4);
+            mainGrid.Children.Add(buttonGrid);
+
+            border.Content = mainGrid;
+            return border;
+        }
+
+        /// <summary>
+        /// Crée un bouton d'action
+        /// </summary>
+        private Button CreateButton(string text, Course course, EventHandler handler, string colorKey, int row, int col)
+        {
+            var button = new Button
+            {
+                Text = text,
+                FontSize = text.Length == 1 ? 15 : 12, // +2 unités
+                HeightRequest = 30, // +2 pour accommoder la plus grande police
+                Padding = 0,
+                BackgroundColor = (Color)Application.Current.Resources[colorKey],
+                TextColor = Colors.White,
+                CornerRadius = 4,
+                CommandParameter = course
+            };
+            button.Clicked += handler;
+            Grid.SetRow(button, row);
+            Grid.SetColumn(button, col);
+            return button;
+        }
+
         // Méthodes pour les boutons +/- (à implémenter via Command Binding ou événements)
         public void OnDecrementClicked(object sender, EventArgs e)
         {
@@ -282,6 +498,9 @@ namespace SevenwandsCompanion
 
                 LastSaveTime = $"Sauvegardé à {DateTime.Now:HH:mm:ss}";
                 System.Diagnostics.Debug.WriteLine($"✅ Token tracking data saved to: {userDataPath}");
+
+                // Après la sauvegarde, rafraîchir l'année du personnage
+                await Services.CompetenceService.Instance.RefreshAnneeFromTokensAsync();
 
                 // En mode DEBUG, sauvegarder aussi dans le fichier source pour le développement
 #if DEBUG

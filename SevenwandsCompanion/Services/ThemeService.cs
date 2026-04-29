@@ -4,6 +4,33 @@ namespace SevenwandsCompanion.Services
 {
     public class ThemeService
     {
+        /// <summary>
+        /// Récupère la couleur primaire d'une maison
+        /// </summary>
+        public Color GetHousePrimaryColor(string maisonNom)
+        {
+            var house = GetAvailableHouses().FirstOrDefault(h => h.Name == maisonNom);
+            if (house != null && !string.IsNullOrEmpty(house.PrimaryColor))
+            {
+                return Color.FromArgb(house.PrimaryColor);
+            }
+            // Couleur par défaut si non trouvée
+            return Colors.Gray;
+        }
+
+        /// <summary>
+        /// Récupère la couleur secondaire d'une maison
+        /// </summary>
+        public Color GetHouseSecondaryColor(string maisonNom)
+        {
+            var house = GetAvailableHouses().FirstOrDefault(h => h.Name == maisonNom);
+            if (house != null && !string.IsNullOrEmpty(house.SecondaryColor))
+            {
+                return Color.FromArgb(house.SecondaryColor);
+            }
+            // Couleur par défaut si non trouvée
+            return Colors.White;
+        }
         private const string SettingsFileName = "UserSettings.json";
         private static ThemeService _instance;
         private string _currentHouse;
@@ -82,17 +109,29 @@ namespace SevenwandsCompanion.Services
                 if (File.Exists(settingsPath))
                 {
                     var json = await File.ReadAllTextAsync(settingsPath);
-                    System.Diagnostics.Debug.WriteLine($"📄 JSON content: {json}");
 
-                    var settings = JsonSerializer.Deserialize<UserSettings>(json);
-                    CurrentHouse = settings?.SelectedHouse ?? string.Empty;
+                    // Vérifier que le JSON n'est pas vide
+                    if (!string.IsNullOrWhiteSpace(json))
+                    {
+                        System.Diagnostics.Debug.WriteLine($"📄 JSON content: {json}");
 
-                    System.Diagnostics.Debug.WriteLine($"✅ House loaded: '{CurrentHouse}'");
+                        var settings = JsonSerializer.Deserialize<UserSettings>(json);
+                        CurrentHouse = settings?.SelectedHouse ?? string.Empty;
+
+                        System.Diagnostics.Debug.WriteLine($"✅ House loaded: '{CurrentHouse}'");
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine($"⚠️ Settings file is empty");
+                        CurrentHouse = string.Empty;
+                    }
                 }
                 else
                 {
-                    System.Diagnostics.Debug.WriteLine($"⚠️ Settings file does not exist at: {settingsPath}");
+                    System.Diagnostics.Debug.WriteLine($"📝 Nouveau utilisateur: création du fichier de paramètres par défaut");
                     CurrentHouse = string.Empty;
+                    // Créer un fichier par défaut
+                    await SaveHouseAsync("Lombrasier");
                 }
 
                 return CurrentHouse;

@@ -87,6 +87,20 @@
         </ShellContent>
     </FlyoutItem>
 
+    <FlyoutItem Title="Personnage">
+        <ShellContent
+                      ContentTemplate="{DataTemplate local:PersonnagePage}"
+                      Route="Personnage"
+                      Shell.NavBarIsVisible="False">
+            <ShellContent.Icon>
+                <FontImageSource Glyph="⚔️" 
+                                 FontFamily="Segoe UI Emoji" 
+                                 Color="#D4AF37"
+                                 Size="24"/>
+            </ShellContent.Icon>
+        </ShellContent>
+    </FlyoutItem>
+
     <FlyoutItem Title="Paramètres">
         <ShellContent
                       ContentTemplate="{DataTemplate local:SettingsPage}"

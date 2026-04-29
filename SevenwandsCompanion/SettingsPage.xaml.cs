@@ -4,9 +4,13 @@ namespace SevenwandsCompanion
 {
     public partial class SettingsPage : ContentPage
     {
+
+        private readonly CarteService _carteService;
+
         public SettingsPage()
         {
             InitializeComponent();
+            _carteService = new CarteService(ThemeService.Instance);
             LoadCurrentHouse();
         }
 
@@ -18,27 +22,51 @@ namespace SevenwandsCompanion
 
         private void LoadCurrentHouse()
         {
-            var currentHouse = ThemeService.Instance.CurrentHouse;
-            
-            if (!string.IsNullOrEmpty(currentHouse))
-            {
-                var houseInfo = ThemeService.Instance.GetAvailableHouses()
-                    .FirstOrDefault(h => h.Name == currentHouse);
-
-                if (houseInfo != null)
-                {
-                    CurrentHouseLabel.Text = $"Maison actuelle : {houseInfo.Icon} {houseInfo.Name}";
-                }
-            }
-            else
-            {
-                CurrentHouseLabel.Text = "Maison actuelle : Aucune";
-            }
+            // La maison actuelle est gérée par ThemeService
+            // Plus besoin d'afficher un label ici
         }
 
         private async void OnChangeHouseClicked(object sender, EventArgs e)
         {
             await Shell.Current.GoToAsync("//HouseSelection");
+        }
+
+        private async void OnGererCompetencesClicked(object sender, EventArgs e)
+        {
+            await Shell.Current.GoToAsync("//Personnage");
+        }
+
+        private async void OnGenererCarteClicked(object sender, EventArgs e)
+        {
+            try
+            {
+                // Génération avec les données du personnage sauvegardées
+                byte[] imageBytes = await _carteService.GenererCarteEtudiantAsync();
+
+                // Sauvegarde et Partage
+                await SauvegarderEtPartager(imageBytes);
+            }
+            catch (Exception ex)
+            {
+                await DisplayAlert("Erreur", $"Impossible de générer la carte : {ex.Message}", "OK");
+            }
+        }
+
+        private async Task SauvegarderEtPartager(byte[] imageBytes)
+        {
+            // Chemin temporaire dans le cache de l'application
+            string fileName = "MaCarteSevenWands.png";
+            string filePath = Path.Combine(FileSystem.CacheDirectory, fileName);
+
+            // Écriture du fichier sur le disque
+            await File.WriteAllBytesAsync(filePath, imageBytes);
+
+            // Ouverture de la fenêtre de partage native (Discord, Mail, Copier, etc.)
+            await Share.Default.RequestAsync(new ShareFileRequest
+            {
+                Title = "Partager ma carte d'étudiant",
+                File = new ShareFile(filePath)
+            });
         }
 
         private async void OnResetDataClicked(object sender, EventArgs e)

@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="SevenwandsCompanion.PersonnagePage"
+             Title="Personnage"
+             BackgroundColor="{DynamicResource BackgroundDark}">
+
+    <ScrollView Padding="20">
+        <VerticalStackLayout Spacing="20">
+
+            <!-- En-tête -->
+            <Label Text="⚔️ MON PERSONNAGE" 
+                   Style="{StaticResource TitleStyle}"/>
+
+            <Label Text="Configure les informations et compétences de ton personnage" 
+                   FontSize="14" 
+                   TextColor="{StaticResource TextSecondary}"
+                   HorizontalOptions="Center"
+                   Margin="0,0,0,10"/>
+
+            <!-- Section Identité -->
+            <Border Style="{StaticResource CardStyle}" Padding="20">
+                <VerticalStackLayout Spacing="15">
+                    <Label Text="👤 Identité" 
+                           FontSize="18" 
+                           FontAttributes="Bold" 
+                           TextColor="{StaticResource AccentGold}"/>
+
+                    <Label Text="Prénom" 
+                           FontSize="14" 
+                           TextColor="{StaticResource TextSecondary}"/>
+                    <Entry Text="{Binding Prenom}"
+                           Placeholder="Entre ton prénom"
+                           BackgroundColor="{DynamicResource BackgroundCard}"
+                           TextColor="{StaticResource TextPrimary}"
+                           PlaceholderColor="{StaticResource TextSecondary}"
+                           TextChanged="OnIdentiteChanged"/>
+
+                    <Label Text="Nom" 
+                           FontSize="14" 
+                           TextColor="{StaticResource TextSecondary}"/>
+                    <Entry Text="{Binding Nom}"
+                           Placeholder="Entre ton nom"
+                           BackgroundColor="{DynamicResource BackgroundCard}"
+                           TextColor="{StaticResource TextPrimary}"
+                           PlaceholderColor="{StaticResource TextSecondary}"
+                           TextChanged="OnIdentiteChanged"/>
+
+                    <Label Text="Année (calculée automatiquement selon tes jetons)" 
+                           FontSize="14" 
+                           TextColor="{StaticResource TextSecondary}"/>
+                    <Label Text="{Binding Annee, StringFormat='{0}ÈME ANNÉE'}"
+                           FontSize="24"
+                           FontAttributes="Bold"
+                           TextColor="{StaticResource AccentGold}"
+                           HorizontalOptions="Center"
+                           Margin="0,5,0,0"/>
+                    <Label Text="💡 Complète tous les cours d'une année pour passer à la suivante"
+                           FontSize="12"
+                           TextColor="{StaticResource TextSecondary}"
+                           HorizontalOptions="Center"
+                           FontAttributes="Italic"
+                           Margin="0,5,0,0"/>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Section Compétences -->
+            <Border Style="{StaticResource CardStyle}" Padding="20">
+                <VerticalStackLayout Spacing="15">
+                    <Label Text="📊 Compétences" 
+                           FontSize="18" 
+                           FontAttributes="Bold" 
+                           TextColor="{StaticResource AccentGold}"/>
+
+                    <!-- Liste des compétences -->
+                    <CollectionView x:Name="CompetencesCollection"
+                                    ItemsSource="{Binding Competences}"
+                                    SelectionMode="None">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <Border Padding="15"
+                                        Margin="0,5"
+                                        BackgroundColor="{DynamicResource BackgroundCard}"
+                                        Stroke="{DynamicResource BorderColor}"
+                                        StrokeThickness="1">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="12"/>
+                                    </Border.StrokeShape>
+
+                                    <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="50,*,100" RowSpacing="8">
+
+                                        <!-- Icône -->
+                                        <Label Grid.Row="0" Grid.Column="0"
+                                               Text="{Binding Icone}"
+                                               FontSize="32"
+                                               VerticalOptions="Center"
+                                               HorizontalOptions="Center"/>
+
+                                        <!-- Nom -->
+                                        <Label Grid.Row="0" Grid.Column="1"
+                                               Text="{Binding Nom}"
+                                               FontSize="16"
+                                               FontAttributes="Bold"
+                                               TextColor="{StaticResource TextPrimary}"
+                                               VerticalOptions="Center"/>
+
+                                        <!-- Valeur actuelle -->
+                                        <Label Grid.Row="0" Grid.Column="2"
+                                               Text="{Binding Valeur}"
+                                               FontSize="22"
+                                               FontAttributes="Bold"
+                                               TextColor="{Binding Couleur}"
+                                               VerticalOptions="Center"
+                                               HorizontalOptions="End"/>
+
+                                        <!-- Contrôles -->
+                                        <HorizontalStackLayout Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" 
+                                                               Spacing="10"
+                                                               HorizontalOptions="End">
+
+                                            <Button Text="-10"
+                                                    WidthRequest="60"
+                                                    HeightRequest="35"
+                                                    FontSize="12"
+                                                    BackgroundColor="{DynamicResource ButtonBackground}"
+                                                    TextColor="{DynamicResource TextPrimary}"
+                                                    CornerRadius="8"
+                                                    Clicked="OnDiminuer10Clicked"
+                                                    CommandParameter="{Binding .}"/>
+
+                                            <Button Text="-1"
+                                                    WidthRequest="50"
+                                                    HeightRequest="35"
+                                                    FontSize="12"
+                                                    BackgroundColor="{DynamicResource ButtonBackground}"
+                                                    TextColor="{DynamicResource TextPrimary}"
+                                                    CornerRadius="8"
+                                                    Clicked="OnDiminuerClicked"
+                                                    CommandParameter="{Binding .}"/>
+
+                                            <Button Text="+1"
+                                                    WidthRequest="50"
+                                                    HeightRequest="35"
+                                                    FontSize="12"
+                                                    BackgroundColor="{Binding Couleur}"
+                                                    TextColor="White"
+                                                    CornerRadius="8"
+                                                    Clicked="OnAugmenterClicked"
+                                                    CommandParameter="{Binding .}"/>
+
+                                            <Button Text="+10"
+                                                    WidthRequest="60"
+                                                    HeightRequest="35"
+                                                    FontSize="12"
+                                                    BackgroundColor="{Binding Couleur}"
+                                                    TextColor="White"
+                                                    CornerRadius="8"
+                                                    Clicked="OnAugmenter10Clicked"
+                                                    CommandParameter="{Binding .}"/>
+                                        </HorizontalStackLayout>
+
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Section Informations -->
+            <Border Style="{StaticResource CardStyle}" Padding="20">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="ℹ️ Informations" 
+                           FontSize="16" 
+                           FontAttributes="Bold" 
+                           TextColor="{StaticResource AccentGold}"/>
+
+                    <Label TextColor="{StaticResource TextSecondary}" FontSize="12">
+                        <Label.FormattedText>
+                            <FormattedString>
+                                <Span Text="🧠 Intelligence"/>
+                                <Span Text=" : Capacité mentale et magique" FontAttributes="Italic"/>
+                                <Span Text="&#10;"/>
+                                <Span Text="⚡ Énergie"/>
+                                <Span Text=" : Points de magie disponibles" FontAttributes="Italic"/>
+                                <Span Text="&#10;"/>
+                                <Span Text="❤️ Santé"/>
+                                <Span Text=" : Points de vie" FontAttributes="Italic"/>
+                                <Span Text="&#10;"/>
+                                <Span Text="💪 Force"/>
+                                <Span Text=" : Puissance physique" FontAttributes="Italic"/>
+                                <Span Text="&#10;"/>
+                                <Span Text="🏃 Agilité"/>
+                                <Span Text=" : Rapidité et esquive" FontAttributes="Italic"/>
+                            </FormattedString>
+                        </Label.FormattedText>
+                    </Label>
+                </VerticalStackLayout>
+            </Border>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

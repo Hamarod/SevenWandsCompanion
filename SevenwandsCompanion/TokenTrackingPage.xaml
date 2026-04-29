@@ -129,8 +129,8 @@
             </Border>
         </Grid>
 
-        <!-- Grille des cours - Layout responsive -->
-        <ScrollView Grid.Row="3">
+        <!-- Grille des cours - Layout responsive qui remplit tout l'espace -->
+        <Grid Grid.Row="3">
             <VerticalStackLayout>
 
                 <!-- En-tête de la section -->
@@ -155,118 +155,14 @@
                        TextColor="{DynamicResource TextSecondary}"
                        Margin="0,0,0,10"/>
 
-                <!-- CollectionView avec layout en grille responsive -->
-                <CollectionView ItemsSource="{Binding SelectedYear.Courses}"
-                                SelectionMode="None">
-                    <CollectionView.ItemsLayout>
-                        <GridItemsLayout Orientation="Vertical" 
-                                         Span="3" 
-                                         HorizontalItemSpacing="10"
-                                         VerticalItemSpacing="10"/>
-                    </CollectionView.ItemsLayout>
-
-                    <CollectionView.ItemTemplate>
-                        <DataTemplate>
-                            <!-- Carte de cours style image fournie -->
-                            <Border Style="{StaticResource CardStyle}"
-                                    Padding="20"
-                                    MinimumWidthRequest="300"
-                                    MinimumHeightRequest="200">
-                                <Grid RowDefinitions="Auto, Auto, Auto, Auto, Auto, Auto" RowSpacing="12">
-
-                                    <!-- En-tête : Icône + Nom -->
-                                    <Grid Grid.Row="0" ColumnDefinitions="Auto, *">
-                                        <Label Grid.Column="0"
-                                               Text="{Binding Icon}" 
-                                               FontSize="28" 
-                                               VerticalOptions="Center"
-                                               Margin="0,0,10,0"/>
-
-                                        <Label Grid.Column="1"
-                                               Text="{Binding Name}" 
-                                               FontSize="16" 
-                                               FontAttributes="Bold" 
-                                               TextColor="{DynamicResource TextPrimary}"
-                                               VerticalOptions="Center"
-                                               LineBreakMode="WordWrap"/>
-                                    </Grid>
-
-                                    <!-- Statut (En cours, etc.) -->
-                                    <Label Grid.Row="1" 
-                                           Text="{Binding StatusText}" 
-                                           FontSize="12" 
-                                           TextColor="{DynamicResource TextSecondary}"/>
-
-                                    <!-- Barre de progression -->
-                                    <ProgressBar Grid.Row="2" 
-                                                 Progress="{Binding Progress}" 
-                                                 Style="{StaticResource ProgressStyle}"
-                                                 Margin="0,5,0,5"/>
-
-                                    <!-- Points : Actuel / Total -->
-                                    <Grid Grid.Row="3" ColumnDefinitions="Auto, Auto, *">
-                                        <Label Grid.Column="0"
-                                               Text="{Binding CurrentPoints}" 
-                                               FontSize="22" 
-                                               FontAttributes="Bold" 
-                                               TextColor="{DynamicResource TextSecondary}"
-                                               VerticalOptions="Center"/>
-                                        <Label Grid.Column="1"
-                                               Text="{Binding TotalPointsText, StringFormat=' / {0}'}" 
-                                               FontSize="12" 
-                                               TextColor="{DynamicResource TextSecondary}"
-                                               VerticalOptions="End"
-                                               Margin="0,0,0,5"/>
-                                    </Grid>
-
-                                    <!-- Boutons d'action -->
-                                    <Grid Grid.Row="4" ColumnDefinitions="Auto, Auto, Auto, Auto, *" ColumnSpacing="10">
-                                        <Button Grid.Column="0"
-                                                Text="−" 
-                                                Style="{StaticResource SmallButtonStyle}"
-                                                CommandParameter="{Binding .}"
-                                                Clicked="OnDecrementClicked"/>
-
-                                        <Button Grid.Column="1"
-                                                Text="+" 
-                                                Style="{StaticResource SmallButtonStyle}"
-                                                CommandParameter="{Binding .}"
-                                                Clicked="OnIncrementClicked"/>
-
-                                        <Button Grid.Column="2"
-                                                Text="+2" 
-                                                WidthRequest="50"
-                                                HeightRequest="40"
-                                                BackgroundColor="{DynamicResource ButtonBackgroundHover}"
-                                                TextColor="{DynamicResource ButtonText}"
-                                                CornerRadius="8"
-                                                CommandParameter="{Binding .}"
-                                                Clicked="OnIncrement2Clicked"/>
-
-                                        <Button Grid.Column="3"
-                                                Text="+5" 
-                                                WidthRequest="50"
-                                                HeightRequest="40"
-                                                BackgroundColor="{DynamicResource ButtonBackgroundHover}"
-                                                TextColor="{DynamicResource ButtonText}"
-                                                CornerRadius="8"
-                                                CommandParameter="{Binding .}"
-                                                Clicked="OnIncrement5Clicked"/>
-                                    </Grid>
-
-                                    <!-- Texte "Il te reste X points" -->
-                                    <Label Grid.Row="5" 
-                                           Text="{Binding RemainingText}" 
-                                           FontSize="12" 
-                                           TextColor="{StaticResource TextSecondary}"/>
-
-                                </Grid>
-                            </Border>
-                        </DataTemplate>
-                    </CollectionView.ItemTemplate>
-                </CollectionView>
+                <!-- Grid dynamique pour les cours - sera rempli dans le code-behind -->
+                <Grid x:Name="CoursesGrid"
+                      ColumnSpacing="8"
+                      RowSpacing="8"
+                      HorizontalOptions="FillAndExpand"
+                      VerticalOptions="FillAndExpand"/>
 
             </VerticalStackLayout>
-        </ScrollView>
+        </Grid>
     </Grid>
 </ContentPage>

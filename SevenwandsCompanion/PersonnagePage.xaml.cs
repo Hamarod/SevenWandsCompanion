@@ -37,6 +37,15 @@ namespace SevenwandsCompanion
             }
         }
 
+        private async void OnAugmenter100Clicked(object sender, EventArgs e)
+        {
+            if (sender is Button button && button.CommandParameter is CompetenceViewModel competence)
+            {
+                competence.Valeur += 100;
+                await _competenceService.SauvegarderCompetencesAsync();
+            }
+        }
+
         private async void OnDiminuerClicked(object sender, EventArgs e)
         {
             if (sender is Button button && button.CommandParameter is CompetenceViewModel competence)

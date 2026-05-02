@@ -40,6 +40,12 @@ namespace SevenwandsCompanion
         {
             try
             {
+                // Rafraîchir les données de jetons avant la génération
+                await TokenService.Instance.RefreshTokenDataAsync();
+
+                // Rafraîchir l'année du personnage depuis les jetons à jour
+                await CompetenceService.Instance.RefreshAnneeFromTokensAsync();
+
                 // Génération avec les données du personnage sauvegardées
                 byte[] imageBytes = await _carteService.GenererCarteEtudiantAsync();
 

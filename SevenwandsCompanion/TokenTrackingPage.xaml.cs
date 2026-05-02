@@ -499,6 +499,9 @@ namespace SevenwandsCompanion
                 LastSaveTime = $"Sauvegardé à {DateTime.Now:HH:mm:ss}";
                 System.Diagnostics.Debug.WriteLine($"✅ Token tracking data saved to: {userDataPath}");
 
+                // Rafraîchir le cache du TokenService pour que la carte utilise les nouvelles données
+                await Services.TokenService.Instance.RefreshTokenDataAsync();
+
                 // Après la sauvegarde, rafraîchir l'année du personnage
                 await Services.CompetenceService.Instance.RefreshAnneeFromTokensAsync();
 

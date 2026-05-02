@@ -23,8 +23,15 @@ namespace SevenwandsCompanion.Services
         /// <summary>
         /// Charge les données de suivi des jetons depuis le fichier sauvegardé
         /// </summary>
-        public async Task<List<YearData>> LoadTokenDataAsync()
+        /// <param name="forceReload">Si true, force le rechargement depuis le fichier même si déjà en cache</param>
+        public async Task<List<YearData>> LoadTokenDataAsync(bool forceReload = false)
         {
+            // Si déjà chargé et pas de forceReload, retourner le cache
+            if (!forceReload && _allYears != null && _allYears.Count > 0)
+            {
+                return _allYears;
+            }
+
             try
             {
                 var settingsPath = Path.Combine(FileSystem.AppDataDirectory, TokenTrackingFileName);
@@ -118,6 +125,16 @@ namespace SevenwandsCompanion.Services
             }
 
             return new TokenStats();
+        }
+
+        /// <summary>
+        /// Force le rechargement des données depuis le fichier
+        /// Utile après une modification dans TokenTrackingPage
+        /// </summary>
+        public async Task RefreshTokenDataAsync()
+        {
+            System.Diagnostics.Debug.WriteLine("🔄 Rafraîchissement forcé des données de jetons");
+            await LoadTokenDataAsync(forceReload: true);
         }
 
         /// <summary>

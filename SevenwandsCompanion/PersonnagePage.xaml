@@ -157,6 +157,16 @@
                                                     CornerRadius="8"
                                                     Clicked="OnAugmenter10Clicked"
                                                     CommandParameter="{Binding .}"/>
+
+                                            <Button Text="+100"
+                                                    WidthRequest="70"
+                                                    HeightRequest="35"
+                                                    FontSize="12"
+                                                    BackgroundColor="{Binding Couleur}"
+                                                    TextColor="White"
+                                                    CornerRadius="8"
+                                                    Clicked="OnAugmenter100Clicked"
+                                                    CommandParameter="{Binding .}"/>
                                         </HorizontalStackLayout>
 
                                     </Grid>

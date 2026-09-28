@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="SevenwandsCompanion.ResourceEditorPage"
+             Title="Édition Ressource"
+             BackgroundColor="{DynamicResource BackgroundDark}"
+             Shell.NavBarIsVisible="False">
+
+    <ScrollView Padding="20">
+        <VerticalStackLayout Spacing="20" MaximumWidthRequest="700" HorizontalOptions="Center">
+
+            <Label Text="{Binding PageTitle}"
+                   Style="{StaticResource TitleStyle}"
+                   HorizontalOptions="Start"/>
+
+            <Border Style="{StaticResource CardStyle}" Padding="20">
+                <VerticalStackLayout Spacing="15">
+
+                    <VerticalStackLayout Spacing="5">
+                        <Label Text="Nom de la ressource *"
+                               TextColor="{StaticResource TextSecondary}"
+                               FontSize="12"/>
+                        <Entry Text="{Binding ResourceName}"
+                               Style="{StaticResource EntryStyle}"
+                               Placeholder="Ex: Minerai de fer"/>
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="5">
+                        <Label Text="Description"
+                               TextColor="{StaticResource TextSecondary}"
+                               FontSize="12"/>
+                        <Editor Text="{Binding Description}"
+                                TextColor="{StaticResource TextPrimary}"
+                                BackgroundColor="{StaticResource BackgroundCard}"
+                                Placeholder="Décrivez la ressource..."
+                                HeightRequest="70"
+                                AutoSize="TextChanges"/>
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="5">
+                        <Label Text="Type *"
+                               TextColor="{StaticResource TextSecondary}"
+                               FontSize="12"/>
+                        <Picker ItemsSource="{Binding AvailableTypes}"
+                                SelectedItem="{Binding SelectedType}"
+                                Style="{StaticResource PickerStyle}"/>
+                        <Label Text="ingredient: utilisée dans une recette de potion | resource: matière première (Forge, Auberge...) | ingredient + resource: les deux à la fois"
+                               TextColor="{StaticResource TextSecondary}"
+                               FontSize="10"
+                               Margin="0,5,0,0"/>
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="5">
+                        <Label Text="Prix (Gallyons) - Optionnel"
+                               TextColor="{StaticResource TextSecondary}"
+                               FontSize="12"/>
+                        <Entry Text="{Binding Price}"
+                               Keyboard="Numeric"
+                               Style="{StaticResource EntryStyle}"
+                               Placeholder="Laissez vide si non achetable"/>
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="5">
+                        <Label Text="Catégories commerciales"
+                               TextColor="{StaticResource TextSecondary}"
+                               FontSize="12"/>
+                        <Label Text="Une ressource peut appartenir à plusieurs catégories (ex: Forge et Auberge)."
+                               TextColor="{StaticResource TextSecondary}"
+                               FontSize="10"/>
+                        <FlexLayout BindableLayout.ItemsSource="{Binding CategoryToggles}"
+                                    Wrap="Wrap"
+                                    Direction="Row"
+                                    JustifyContent="Start"
+                                    Margin="0,5,0,0">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate>
+                                    <HorizontalStackLayout Spacing="4" Margin="0,0,15,8">
+                                        <CheckBox IsChecked="{Binding IsSelected}"
+                                                  Color="{StaticResource AccentGold}"/>
+                                        <Label Text="{Binding Category.Name}"
+                                               TextColor="{StaticResource TextPrimary}"
+                                               FontSize="13"
+                                               VerticalOptions="Center"/>
+                                    </HorizontalStackLayout>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </FlexLayout>
+                    </VerticalStackLayout>
+
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Boutons d'action -->
+            <Grid ColumnDefinitions="*, *, *" ColumnSpacing="15" Margin="0,10,0,20">
+                <Button Grid.Column="0"
+                        Text="🗑️ Supprimer"
+                        BackgroundColor="{DynamicResource AccentRed}"
+                        TextColor="White"
+                        FontSize="16"
+                        FontAttributes="Bold"
+                        HeightRequest="50"
+                        CornerRadius="8"
+                        Clicked="OnDeleteClicked"
+                        IsVisible="{Binding IsEditMode}"/>
+
+                <Button Grid.Column="1"
+                        Text="❌ Annuler"
+                        BackgroundColor="{StaticResource ButtonBackground}"
+                        TextColor="{StaticResource TextPrimary}"
+                        FontSize="16"
+                        FontAttributes="Bold"
+                        HeightRequest="50"
+                        CornerRadius="8"
+                        Clicked="OnCancelClicked"/>
+
+                <Button Grid.Column="2"
+                        Text="💾 Enregistrer"
+                        BackgroundColor="{DynamicResource ButtonBackground}"
+                        TextColor="White"
+                        FontSize="16"
+                        FontAttributes="Bold"
+                        HeightRequest="50"
+                        CornerRadius="8"
+                        Clicked="OnSaveClicked"/>
+            </Grid>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

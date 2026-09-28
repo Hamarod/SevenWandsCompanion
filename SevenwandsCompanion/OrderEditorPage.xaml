@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="SevenwandsCompanion.OrderEditorPage"
+             Title="Nouvelle Commande"
+             BackgroundColor="{DynamicResource BackgroundDark}"
+             Shell.NavBarIsVisible="False">
+
+    <ScrollView Padding="20">
+        <VerticalStackLayout Spacing="20" MaximumWidthRequest="700" HorizontalOptions="Center">
+
+            <Label Text="📋 NOUVELLE COMMANDE"
+                   Style="{StaticResource TitleStyle}"
+                   HorizontalOptions="Start"/>
+
+            <Border Style="{StaticResource CardStyle}" Padding="20">
+                <VerticalStackLayout Spacing="15">
+
+                    <VerticalStackLayout Spacing="5">
+                        <Label Text="Nom du commanditaire *"
+                               TextColor="{StaticResource TextSecondary}"
+                               FontSize="12"/>
+                        <Entry Text="{Binding CustomerName}"
+                               Style="{StaticResource EntryStyle}"
+                               Placeholder="Ex: Galion Lombrasier"/>
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="5">
+                        <Label Text="Date de livraison *"
+                               TextColor="{StaticResource TextSecondary}"
+                               FontSize="12"/>
+                        <DatePicker Date="{Binding Deadline}"
+                                    Format="dd/MM/yyyy"
+                                    TextColor="{StaticResource TextPrimary}"
+                                    BackgroundColor="{StaticResource BackgroundCard}"/>
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="5">
+                        <Label Text="Somme négociée (Gallyons) *"
+                               TextColor="{StaticResource TextSecondary}"
+                               FontSize="12"/>
+                        <Entry Text="{Binding NegotiatedPrice}"
+                               Keyboard="Numeric"
+                               Style="{StaticResource EntryStyle}"
+                               Placeholder="Ex: 500"/>
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="5">
+                        <Label Text="Rechercher un produit ou une ressource"
+                               TextColor="{StaticResource TextSecondary}"
+                               FontSize="12"/>
+                        <Border Style="{StaticResource CardStyle}" Padding="10,8">
+                            <Grid ColumnDefinitions="Auto, *">
+                                <Label Text="🔍"
+                                       FontSize="16"
+                                       VerticalOptions="Center"
+                                       Margin="5,0"/>
+                                <SearchBar Grid.Column="1"
+                                           Placeholder="Ex: Chocolat, Cacao..."
+                                           PlaceholderColor="{StaticResource TextSecondary}"
+                                           TextColor="{StaticResource TextPrimary}"
+                                           BackgroundColor="Transparent"
+                                           Text="{Binding SearchText}"
+                                           VerticalOptions="Center"
+                                           Margin="0"/>
+                            </Grid>
+                        </Border>
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="5">
+                        <Label Text="Produits et ressources à fournir"
+                               TextColor="{StaticResource TextSecondary}"
+                               FontSize="12"/>
+                        <Border Style="{StaticResource CardStyle}" Padding="0" MaximumHeightRequest="400">
+                            <ScrollView>
+                                <VerticalStackLayout BindableLayout.ItemsSource="{Binding Entries}">
+                                    <BindableLayout.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid Padding="12,8" ColumnDefinitions="Auto, *, Auto" ColumnSpacing="10">
+                                                <Label Grid.Column="0"
+                                                       Text="{Binding KindLabel}"
+                                                       TextColor="{StaticResource TextSecondary}"
+                                                       FontSize="11"
+                                                       WidthRequest="80"
+                                                       VerticalOptions="Center"/>
+                                                <Label Grid.Column="1"
+                                                       Text="{Binding Name}"
+                                                       TextColor="{StaticResource TextPrimary}"
+                                                       FontSize="13"
+                                                       VerticalOptions="Center"/>
+                                                <Entry Grid.Column="2"
+                                                       Text="{Binding Quantity}"
+                                                       Keyboard="Numeric"
+                                                       WidthRequest="70"
+                                                       HorizontalTextAlignment="Center"
+                                                       Style="{StaticResource EntryStyle}"/>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </BindableLayout.ItemTemplate>
+                                </VerticalStackLayout>
+                            </ScrollView>
+                        </Border>
+                    </VerticalStackLayout>
+
+                </VerticalStackLayout>
+            </Border>
+
+            <Grid ColumnDefinitions="*, *" ColumnSpacing="15" Margin="0,10,0,20">
+                <Button Grid.Column="0"
+                        Text="❌ Annuler"
+                        BackgroundColor="{StaticResource ButtonBackground}"
+                        TextColor="{StaticResource TextPrimary}"
+                        FontSize="16"
+                        FontAttributes="Bold"
+                        HeightRequest="50"
+                        CornerRadius="8"
+                        Clicked="OnCancelClicked"/>
+
+                <Button Grid.Column="1"
+                        Text="💾 Enregistrer"
+                        BackgroundColor="{DynamicResource ButtonBackground}"
+                        TextColor="White"
+                        FontSize="16"
+                        FontAttributes="Bold"
+                        HeightRequest="50"
+                        CornerRadius="8"
+                        Clicked="OnSaveClicked"/>
+            </Grid>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

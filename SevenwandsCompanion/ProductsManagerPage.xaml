@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="SevenwandsCompanion.ProductsManagerPage"
+             Title="Gestion des Produits"
+             BackgroundColor="{DynamicResource BackgroundDark}"
+             Shell.NavBarIsVisible="False">
+
+    <Grid Padding="20" RowDefinitions="Auto, Auto, Auto, *" RowSpacing="15">
+
+        <!-- En-tête -->
+        <Grid Grid.Row="0" ColumnDefinitions="*, Auto">
+            <VerticalStackLayout Grid.Column="0" Spacing="5">
+                <Label Text="📦 GESTION DES PRODUITS"
+                       Style="{StaticResource TitleStyle}"
+                       HorizontalOptions="Start"/>
+                <Label Text="Ajoutez, modifiez ou supprimez vos produits"
+                       FontSize="14"
+                       TextColor="{StaticResource TextSecondary}"/>
+            </VerticalStackLayout>
+
+            <Button Grid.Column="1"
+                    Text="← Retour"
+                    FontSize="14"
+                    BackgroundColor="{StaticResource ButtonBackground}"
+                    TextColor="{StaticResource TextPrimary}"
+                    CornerRadius="8"
+                    Padding="20,10"
+                    Clicked="OnBackClicked"
+                    VerticalOptions="Center"/>
+        </Grid>
+
+        <!-- Boutons d'action -->
+        <Grid Grid.Row="1" ColumnDefinitions="*, *" ColumnSpacing="10">
+            <Button Grid.Column="0"
+                    Text="➕ Nouveau produit"
+                    FontSize="14"
+                    BackgroundColor="{DynamicResource ButtonBackground}"
+                    TextColor="White"
+                    CornerRadius="8"
+                    Padding="15,10"
+                    Clicked="OnNewProductClicked"/>
+            <Button Grid.Column="1"
+                    Text="✏️ Modifier"
+                    FontSize="14"
+                    BackgroundColor="{DynamicResource ButtonBackground}"
+                    TextColor="White"
+                    CornerRadius="8"
+                    Padding="15,10"
+                    Clicked="OnEditProductClicked"
+                    IsEnabled="{Binding SelectedProduct, Converter={StaticResource IsNotNullConverter}}"/>
+        </Grid>
+
+        <!-- Barre de recherche -->
+        <Border Grid.Row="2"
+                Style="{StaticResource CardStyle}"
+                Padding="10,8">
+            <Grid ColumnDefinitions="Auto, *">
+                <Label Text="🔍"
+                       FontSize="18"
+                       VerticalOptions="Center"
+                       Margin="5,0"/>
+                <SearchBar Grid.Column="1"
+                           Placeholder="Rechercher un produit..."
+                           PlaceholderColor="{StaticResource TextSecondary}"
+                           TextColor="{StaticResource TextPrimary}"
+                           BackgroundColor="Transparent"
+                           Text="{Binding SearchText}"
+                           VerticalOptions="Center"
+                           Margin="0"/>
+            </Grid>
+        </Border>
+
+        <!-- Liste des produits -->
+        <Border Grid.Row="3" Style="{StaticResource CardStyle}">
+            <CollectionView ItemsSource="{Binding FilteredProducts}"
+                            SelectionMode="Single"
+                            SelectedItem="{Binding SelectedProduct}">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Grid Padding="12,10">
+                            <VisualStateManager.VisualStateGroups>
+                                <VisualStateGroup Name="CommonStates">
+                                    <VisualState Name="Normal">
+                                        <VisualState.Setters>
+                                            <Setter Property="BackgroundColor" Value="Transparent" />
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                    <VisualState Name="Selected">
+                                        <VisualState.Setters>
+                                            <Setter Property="BackgroundColor" Value="{DynamicResource ButtonBackground}" />
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                </VisualStateGroup>
+                            </VisualStateManager.VisualStateGroups>
+                            <Grid ColumnDefinitions="*, Auto">
+                                <Label Grid.Column="0"
+                                       Text="{Binding Name}"
+                                       TextColor="{StaticResource TextPrimary}"
+                                       VerticalOptions="Center"
+                                       FontSize="14"/>
+                                <Label Grid.Column="1"
+                                       Text="{Binding SellPrice, StringFormat='{0} Gallyons'}"
+                                       TextColor="{StaticResource TextSecondary}"
+                                       VerticalOptions="Center"
+                                       FontSize="12"/>
+                            </Grid>
+                        </Grid>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </Border>
+    </Grid>
+</ContentPage>

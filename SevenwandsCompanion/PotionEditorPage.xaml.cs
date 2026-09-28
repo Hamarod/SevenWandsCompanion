@@ -59,6 +59,8 @@ namespace SevenwandsCompanion
         }
 
         private bool _isEditMode = false;
+        public bool IsEditMode => _isEditMode;
+
         private bool _isFirstAppearing = true; // Flag pour éviter le rechargement lors du premier affichage
         private List<Potion> _allPotions;
 
@@ -99,6 +101,7 @@ namespace SevenwandsCompanion
         public PotionEditorPage(Potion potionToEdit) : this()
         {
             _isEditMode = true;
+            OnPropertyChanged(nameof(IsEditMode));
             PageTitle = "✏️ MODIFIER POTION";
             PageSubtitle = $"Modifiez les propriétés de {potionToEdit.Name}";
 
@@ -147,7 +150,11 @@ namespace SevenwandsCompanion
 
                 var ingredientsDict = SevenwandsTools.DeserializeIngredients(ingredientsJson);
                 AllIngredients.Clear();
-                foreach (var ingredient in ingredientsDict.Values.OrderBy(i => i.Name))
+                // Les ressources pures (type "resource") ne servent à aucune recette de potion :
+                // on les exclut pour ne pas surcharger la liste de sélection.
+                foreach (var ingredient in ingredientsDict.Values
+                    .Where(i => i.Type.IsUsableInPotionRecipe())
+                    .OrderBy(i => i.Name))
                 {
                     AllIngredients.Add(ingredient);
                 }
@@ -490,6 +497,37 @@ namespace SevenwandsCompanion
             }
         }
 
+        private async void OnDeleteClicked(object sender, EventArgs e)
+        {
+            if (!_isEditMode) return;
+
+            bool confirm = await DisplayAlert(
+                "Confirmation",
+                $"Voulez-vous vraiment supprimer le produit '{EditedPotion.Name}' ?",
+                "Supprimer",
+                "Annuler");
+
+            if (!confirm) return;
+
+            try
+            {
+                _allPotions.RemoveAll(p => p.Id == EditedPotion.Id);
+
+                string appDataPath = Path.Combine(FileSystem.AppDataDirectory, PotionsAssetPath);
+                await SevenwandsTools.SavePotionsToJson(appDataPath, _allPotions.OrderBy(p => p.Order).ToList());
+                System.Diagnostics.Debug.WriteLine($"🗑️ Produit supprimé, sauvegardé: {appDataPath}");
+
+                await DisplayAlert("Succès", $"Le produit '{EditedPotion.Name}' a été supprimé.", "OK");
+
+                await Shell.Current.GoToAsync("..");
+            }
+            catch (Exception ex)
+            {
+                await DisplayAlert("Erreur", $"Erreur lors de la suppression: {ex.Message}", "OK");
+                System.Diagnostics.Debug.WriteLine($"Delete error: {ex.Message}");
+            }
+        }
+
         private async void OnCancelClicked(object sender, EventArgs e)
         {
             bool confirm = await DisplayAlert("Confirmation", "Voulez-vous vraiment annuler ? Les modifications seront perdues.", "Annuler", "Continuer l'édition");
@@ -550,7 +588,11 @@ namespace SevenwandsCompanion
                     var ingredientsDict = SevenwandsTools.DeserializeIngredients(ingredientsJson);
 
                     AllIngredients.Clear();
-                    foreach (var ingredient in ingredientsDict.Values.OrderBy(i => i.Name))
+                    // Les ressources pures (type "resource") ne servent à aucune recette de potion :
+                // on les exclut pour ne pas surcharger la liste de sélection.
+                foreach (var ingredient in ingredientsDict.Values
+                    .Where(i => i.Type.IsUsableInPotionRecipe())
+                    .OrderBy(i => i.Name))
                     {
                         AllIngredients.Add(ingredient);
                     }

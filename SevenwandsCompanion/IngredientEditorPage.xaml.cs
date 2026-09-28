@@ -81,6 +81,8 @@ namespace SevenwandsCompanion
             IngredientTypes = new ObservableCollection<IngredientType>
             {
                 IngredientType.ingredient,
+                IngredientType.resource,
+                IngredientType.ingredientAndResource,
                 IngredientType.Fire,
                 IngredientType.rotate,
                 IngredientType.spell
@@ -410,6 +412,8 @@ namespace SevenwandsCompanion
             IngredientType.ingredient => "🌿 Ingrédient",
             IngredientType.rotate => "🔄 Rotation",
             IngredientType.spell => "✨ Formule",
+            IngredientType.resource => "📦 Ressource",
+            IngredientType.ingredientAndResource => "🌿📦 Ingrédient + Ressource",
             _ => Type.ToString()
         };
 

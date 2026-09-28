@@ -150,7 +150,7 @@
                                 <Picker ItemsSource="{Binding IngredientTypes}"
                                         SelectedItem="{Binding EditedIngredient.Type}"
                                         Style="{StaticResource PickerStyle}"/>
-                                <Label Text="Fire: Intensité du feu | ingredent: Ingrédient physique | rotate: Sens de rotation | spell: Formule" 
+                                <Label Text="Fire: Intensité du feu | ingredient: Ingrédient de potion | rotate: Sens de rotation | spell: Formule | resource: Ressource de stock (Forge, Auberge...), absente des recettes de potion | ingredient + resource: les deux à la fois"
                                        TextColor="{StaticResource TextSecondary}" 
                                        FontSize="10"
                                        Margin="0,5,0,0"/>

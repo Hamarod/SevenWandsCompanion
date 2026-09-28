@@ -183,6 +183,15 @@ namespace SevenwandsCompanion
                     }
 
                     System.Diagnostics.Debug.WriteLine($"Loaded {Years.Count} years successfully");
+
+                    // Scolarité déjà terminée (7ème année complétée) dès le lancement de
+                    // l'application : on redirige directement sur l'écran Business plutôt que
+                    // d'attendre une nouvelle transition non-complété -> complété.
+                    bool finalYearAlreadyCompleted = Years.Any(y => y.Year == FinalYearNumber && y.IsYearCompleted);
+                    if (finalYearAlreadyCompleted)
+                    {
+                        await Shell.Current.GoToAsync("//Business");
+                    }
                 }
             }
             catch (Exception ex)
@@ -433,18 +442,17 @@ namespace SevenwandsCompanion
             return button;
         }
 
+        // Numéro de la dernière année du cursus : une fois tous ses cours complétés
+        // (jetons requis atteints), l'utilisateur "graduate" et bascule sur l'écran Business.
+        // Accessible depuis AppShell pour réordonner le menu une fois la scolarité terminée.
+        internal const int FinalYearNumber = 7;
+
         // Méthodes pour les boutons +/- (à implémenter via Command Binding ou événements)
         public void OnDecrementClicked(object sender, EventArgs e)
         {
-            if (sender is Button button && button.CommandParameter is Course course)
+            if (sender is Button button && button.CommandParameter is Course course && course.CurrentPoints > 0)
             {
-                if (course.CurrentPoints > 0)
-                {
-                    course.CurrentPoints -= 1;
-                    SelectedYear?.RefreshCalculations();
-                    UpdateStatistics();
-                    _ = SaveDataAsync();
-                }
+                ApplyPointsChange(course, -1);
             }
         }
 
@@ -452,10 +460,7 @@ namespace SevenwandsCompanion
         {
             if (sender is Button button && button.CommandParameter is Course course)
             {
-                course.CurrentPoints += 1;
-                SelectedYear?.RefreshCalculations();
-                UpdateStatistics();
-                _ = SaveDataAsync();
+                ApplyPointsChange(course, 1);
             }
         }
 
@@ -463,10 +468,7 @@ namespace SevenwandsCompanion
         {
             if (sender is Button button && button.CommandParameter is Course course)
             {
-                course.CurrentPoints += 2;
-                SelectedYear?.RefreshCalculations();
-                UpdateStatistics();
-                _ = SaveDataAsync();
+                ApplyPointsChange(course, 2);
             }
         }
 
@@ -474,10 +476,37 @@ namespace SevenwandsCompanion
         {
             if (sender is Button button && button.CommandParameter is Course course)
             {
-                course.CurrentPoints += 5;
-                SelectedYear?.RefreshCalculations();
-                UpdateStatistics();
-                _ = SaveDataAsync();
+                ApplyPointsChange(course, 5);
+            }
+        }
+
+        private void ApplyPointsChange(Course course, int delta)
+        {
+            bool wasFinalYearCompleted = SelectedYear != null
+                && SelectedYear.Year == FinalYearNumber
+                && SelectedYear.IsYearCompleted;
+
+            course.CurrentPoints = Math.Max(0, course.CurrentPoints + delta);
+            SelectedYear?.RefreshCalculations();
+            UpdateStatistics();
+            _ = SaveDataAndCheckGraduationAsync(wasFinalYearCompleted);
+        }
+
+        /// <summary>
+        /// Sauvegarde puis, si la dernière année vient tout juste d'être complétée
+        /// (transition non-complété -> complété), redirige automatiquement vers l'écran Business.
+        /// </summary>
+        private async Task SaveDataAndCheckGraduationAsync(bool wasFinalYearCompleted)
+        {
+            await SaveDataAsync();
+
+            bool isNowFinalYearCompleted = SelectedYear != null
+                && SelectedYear.Year == FinalYearNumber
+                && SelectedYear.IsYearCompleted;
+
+            if (!wasFinalYearCompleted && isNowFinalYearCompleted)
+            {
+                await Shell.Current.GoToAsync("//Business");
             }
         }
 

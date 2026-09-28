@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="SevenwandsCompanion.ProductEditorPage"
+             Title="Édition Produit"
+             BackgroundColor="{DynamicResource BackgroundDark}"
+             Shell.NavBarIsVisible="False">
+
+    <ScrollView Padding="20">
+        <VerticalStackLayout Spacing="20" MaximumWidthRequest="700" HorizontalOptions="Center">
+
+            <Label Text="{Binding PageTitle}"
+                   Style="{StaticResource TitleStyle}"
+                   HorizontalOptions="Start"/>
+
+            <!-- Informations générales -->
+            <Border Style="{StaticResource CardStyle}" Padding="20">
+                <VerticalStackLayout Spacing="15">
+
+                    <VerticalStackLayout Spacing="5">
+                        <Label Text="Nom du produit *"
+                               TextColor="{StaticResource TextSecondary}"
+                               FontSize="12"/>
+                        <Entry Text="{Binding ProductName}"
+                               Style="{StaticResource EntryStyle}"
+                               Placeholder="Ex: Potion de soin"/>
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="5">
+                        <Label Text="Description"
+                               TextColor="{StaticResource TextSecondary}"
+                               FontSize="12"/>
+                        <Editor Text="{Binding Description}"
+                                TextColor="{StaticResource TextPrimary}"
+                                BackgroundColor="{StaticResource BackgroundCard}"
+                                Placeholder="Décrivez le produit..."
+                                HeightRequest="70"
+                                AutoSize="TextChanges"/>
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="5">
+                        <Label Text="Catégorie commerciale"
+                               TextColor="{StaticResource TextSecondary}"
+                               FontSize="12"/>
+                        <Picker ItemsSource="{Binding AvailableCategories}"
+                                ItemDisplayBinding="{Binding Name}"
+                                SelectedItem="{Binding SelectedCategory}"
+                                Style="{StaticResource PickerStyle}"/>
+                    </VerticalStackLayout>
+
+                    <Grid ColumnDefinitions="*, *" ColumnSpacing="15">
+                        <VerticalStackLayout Grid.Column="0" Spacing="5">
+                            <Label Text="Prix de vente (boutique)"
+                                   TextColor="{StaticResource TextSecondary}"
+                                   FontSize="12"/>
+                            <Entry Text="{Binding SellPrice}"
+                                   Keyboard="Numeric"
+                                   Style="{StaticResource EntryStyle}"/>
+                        </VerticalStackLayout>
+                        <VerticalStackLayout Grid.Column="1" Spacing="5">
+                            <Label Text="Prix de revente (joueur)"
+                                   TextColor="{StaticResource TextSecondary}"
+                                   FontSize="12"/>
+                            <Entry Text="{Binding ResalePrice}"
+                                   Keyboard="Numeric"
+                                   Style="{StaticResource EntryStyle}"/>
+                        </VerticalStackLayout>
+                    </Grid>
+
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Recette -->
+            <Border Style="{StaticResource CardStyle}" Padding="20">
+                <VerticalStackLayout Spacing="15">
+                    <Label Text="📜 RECETTE"
+                           Style="{StaticResource SectionTitleStyle}"/>
+
+                    <CollectionView ItemsSource="{Binding RecipeIngredients}">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <Border Style="{StaticResource CardStyle}"
+                                        BackgroundColor="{StaticResource BackgroundDark}"
+                                        Margin="0,5"
+                                        Padding="12">
+                                    <Grid ColumnDefinitions="*, Auto, Auto, Auto" ColumnSpacing="10">
+                                        <Picker Grid.Column="0"
+                                                ItemsSource="{Binding AvailableIngredients}"
+                                                ItemDisplayBinding="{Binding Name}"
+                                                SelectedItem="{Binding SelectedIngredient, Mode=TwoWay}"
+                                                Style="{StaticResource PickerStyle}"
+                                                VerticalOptions="Center"/>
+
+                                        <Entry Grid.Column="1"
+                                               Text="{Binding Quantity}"
+                                               Keyboard="Numeric"
+                                               WidthRequest="80"
+                                               Style="{StaticResource EntryStyle}"
+                                               Placeholder="Qté"
+                                               VerticalOptions="Center"/>
+
+                                        <Label Grid.Column="2"
+                                               Text="x"
+                                               TextColor="{StaticResource TextSecondary}"
+                                               FontSize="14"
+                                               VerticalOptions="Center"/>
+
+                                        <Button Grid.Column="3"
+                                                Text="🗑️"
+                                                FontSize="16"
+                                                WidthRequest="40"
+                                                HeightRequest="40"
+                                                BackgroundColor="{DynamicResource AccentRed}"
+                                                TextColor="White"
+                                                CornerRadius="6"
+                                                CommandParameter="{Binding .}"
+                                                Clicked="OnRemoveIngredientClicked"
+                                                VerticalOptions="Center"/>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                        <CollectionView.EmptyView>
+                            <Label Text="Aucun ingrédient ajouté. Cliquez sur '+ Ajouter ingrédient' ci-dessous pour commencer."
+                                   TextColor="{StaticResource TextSecondary}"
+                                   FontSize="12"
+                                   HorizontalOptions="Center"
+                                   Margin="0,20"/>
+                        </CollectionView.EmptyView>
+                    </CollectionView>
+
+                    <Button Text="+ Ajouter ingrédient"
+                            FontSize="12"
+                            BackgroundColor="{DynamicResource ButtonBackground}"
+                            TextColor="White"
+                            CornerRadius="6"
+                            Padding="15,10"
+                            Clicked="OnAddIngredientClicked"/>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Boutons d'action -->
+            <Grid ColumnDefinitions="*, *, *" ColumnSpacing="15" Margin="0,10,0,20">
+                <Button Grid.Column="0"
+                        Text="🗑️ Supprimer"
+                        BackgroundColor="{DynamicResource AccentRed}"
+                        TextColor="White"
+                        FontSize="16"
+                        FontAttributes="Bold"
+                        HeightRequest="50"
+                        CornerRadius="8"
+                        Clicked="OnDeleteClicked"
+                        IsVisible="{Binding IsEditMode}"/>
+
+                <Button Grid.Column="1"
+                        Text="❌ Annuler"
+                        BackgroundColor="{StaticResource ButtonBackground}"
+                        TextColor="{StaticResource TextPrimary}"
+                        FontSize="16"
+                        FontAttributes="Bold"
+                        HeightRequest="50"
+                        CornerRadius="8"
+                        Clicked="OnCancelClicked"/>
+
+                <Button Grid.Column="2"
+                        Text="💾 Enregistrer"
+                        BackgroundColor="{DynamicResource ButtonBackground}"
+                        TextColor="White"
+                        FontSize="16"
+                        FontAttributes="Bold"
+                        HeightRequest="50"
+                        CornerRadius="8"
+                        Clicked="OnSaveClicked"/>
+            </Grid>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

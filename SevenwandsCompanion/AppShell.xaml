@@ -60,7 +60,7 @@
         Route="HouseSelection"
         Shell.FlyoutItemIsVisible="False"/>
 
-    <FlyoutItem Title="Suivi des Jetons" Route="TokenTracking">
+    <FlyoutItem x:Name="TokenTrackingFlyoutItem" Title="Suivi des Jetons" Route="TokenTracking">
         <ShellContent
                       ContentTemplate="{DataTemplate local:TokenTrackingPage}"
                       Shell.NavBarIsVisible="False">
@@ -87,6 +87,20 @@
         </ShellContent>
     </FlyoutItem>
 
+    <FlyoutItem Title="Business">
+        <ShellContent
+                      ContentTemplate="{DataTemplate local:BusinessPage}"
+                      Route="Business"
+                      Shell.NavBarIsVisible="False">
+            <ShellContent.Icon>
+                <FontImageSource Glyph="💰"
+                                 FontFamily="Segoe UI Emoji"
+                                 Color="#D4AF37"
+                                 Size="24"/>
+            </ShellContent.Icon>
+        </ShellContent>
+    </FlyoutItem>
+
     <FlyoutItem Title="Personnage">
         <ShellContent
                       ContentTemplate="{DataTemplate local:PersonnagePage}"
@@ -101,7 +115,7 @@
         </ShellContent>
     </FlyoutItem>
 
-    <FlyoutItem Title="Paramètres">
+    <FlyoutItem x:Name="ParametresFlyoutItem" Title="Paramètres">
         <ShellContent
                       ContentTemplate="{DataTemplate local:SettingsPage}"
                       Route="Settings"

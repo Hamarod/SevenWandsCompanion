@@ -1,0 +1,340 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="SevenwandsCompanion.BusinessPage"
+             BackgroundColor="{DynamicResource BackgroundDark}"
+             Shell.NavBarIsVisible="False">
+
+    <Grid Padding="20" RowDefinitions="Auto, Auto, *" RowSpacing="15">
+
+        <!-- En-tête -->
+        <Grid Grid.Row="0" ColumnDefinitions="*, Auto">
+            <VerticalStackLayout Grid.Column="0" Spacing="5">
+                <Label Text="💰 GESTION COMMERCIALE"
+                       Style="{StaticResource TitleStyle}"
+                       HorizontalOptions="Start"/>
+                <Label Text="Suivez votre stock de ressources et calculez vos marges de revente"
+                       FontSize="14"
+                       TextColor="{StaticResource TextSecondary}"/>
+                <HorizontalStackLayout Spacing="10" Margin="0,5,0,0">
+                    <Label Text="{Binding TreasuryDisplay}"
+                           TextColor="{StaticResource AccentGold}"
+                           FontAttributes="Bold"
+                           FontSize="14"
+                           VerticalOptions="Center"/>
+                    <Button Text="↺ Reset"
+                            FontSize="11"
+                            BackgroundColor="{StaticResource ButtonBackground}"
+                            TextColor="{StaticResource TextPrimary}"
+                            CornerRadius="6"
+                            Padding="10,4"
+                            Clicked="OnResetTreasuryClicked"/>
+                </HorizontalStackLayout>
+            </VerticalStackLayout>
+
+            <Button Grid.Column="1"
+                    Text="{Binding OrdersButtonText}"
+                    FontSize="14"
+                    FontAttributes="Bold"
+                    BackgroundColor="{DynamicResource ButtonBackground}"
+                    TextColor="White"
+                    CornerRadius="8"
+                    Padding="20,10"
+                    Clicked="OnManageOrdersClicked"
+                    VerticalOptions="Center"/>
+        </Grid>
+
+        <!-- Barre de recherche globale (filtre stock ET produits) -->
+        <Border Grid.Row="1"
+                Style="{StaticResource CardStyle}"
+                Padding="10,8">
+            <Grid ColumnDefinitions="Auto, *">
+                <Label Text="🔍"
+                       FontSize="18"
+                       VerticalOptions="Center"
+                       Margin="5,0"/>
+                <SearchBar Grid.Column="1"
+                           Placeholder="Rechercher une ressource ou un produit..."
+                           PlaceholderColor="{StaticResource TextSecondary}"
+                           TextColor="{StaticResource TextPrimary}"
+                           BackgroundColor="Transparent"
+                           Text="{Binding SearchText}"
+                           VerticalOptions="Center"
+                           Margin="0"/>
+            </Grid>
+        </Border>
+
+        <!-- Contenu principal -->
+        <Grid Grid.Row="2" ColumnDefinitions="*, *" ColumnSpacing="20">
+
+            <!-- Colonne 1 : Stock de ressources -->
+            <Grid Grid.Column="0" RowDefinitions="Auto, Auto, *" RowSpacing="10">
+                <Grid Grid.Row="0" ColumnDefinitions="*, Auto">
+                    <Label Grid.Column="0"
+                           Text="📦 STOCK DE RESSOURCES"
+                           Style="{StaticResource SectionTitleStyle}"
+                           VerticalOptions="Center"/>
+                    <Button Grid.Column="1"
+                            Text="🌿 Gérer les ressources"
+                            FontSize="12"
+                            BackgroundColor="{DynamicResource ButtonBackground}"
+                            TextColor="White"
+                            CornerRadius="6"
+                            Padding="12,8"
+                            Clicked="OnManageResourcesClicked"/>
+                </Grid>
+
+                <Picker Grid.Row="1"
+                        ItemsSource="{Binding StockSortOptions}"
+                        SelectedItem="{Binding SelectedStockSort}"
+                        Style="{StaticResource PickerStyle}"
+                        Title="Trier par"/>
+
+                <Border Grid.Row="2" Style="{StaticResource CardStyle}">
+                    <CollectionView ItemsSource="{Binding StockGroups}">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <VerticalStackLayout>
+                                    <Grid BackgroundColor="{StaticResource BackgroundCard}"
+                                          Padding="12,10">
+                                        <Label Text="{Binding HeaderText}"
+                                               FontSize="13"
+                                               FontAttributes="Bold"
+                                               TextColor="{StaticResource AccentGold}"
+                                               HorizontalOptions="Start"/>
+                                        <Grid.GestureRecognizers>
+                                            <TapGestureRecognizer Tapped="OnToggleStockGroupClicked"/>
+                                        </Grid.GestureRecognizers>
+                                    </Grid>
+
+                                    <VerticalStackLayout IsVisible="{Binding IsExpanded}"
+                                                         BindableLayout.ItemsSource="{Binding Items}">
+                                        <BindableLayout.ItemTemplate>
+                                            <DataTemplate>
+                                                <Grid Padding="12,10" ColumnDefinitions="*, Auto, Auto" ColumnSpacing="10">
+                                                    <VerticalStackLayout Grid.Column="0" Spacing="2" VerticalOptions="Center">
+                                                        <Label Text="{Binding Name}"
+                                                               TextColor="{StaticResource TextPrimary}"
+                                                               FontSize="14"
+                                                               FontAttributes="Bold"/>
+                                                        <Label Text="{Binding UnitPriceDisplay}"
+                                                               TextColor="{StaticResource TextSecondary}"
+                                                               FontSize="11"/>
+                                                        <Label Text="{Binding CategoriesDisplay}"
+                                                               TextColor="{StaticResource TextSecondary}"
+                                                               FontSize="10"/>
+                                                    </VerticalStackLayout>
+
+                                                    <Label Grid.Column="1"
+                                                           Text="Possédé:"
+                                                           TextColor="{StaticResource TextSecondary}"
+                                                           FontSize="12"
+                                                           VerticalOptions="Center"/>
+
+                                                    <HorizontalStackLayout Grid.Column="2" Spacing="4" VerticalOptions="Center">
+                                                        <Button Text="−"
+                                                                FontSize="14"
+                                                                FontAttributes="Bold"
+                                                                WidthRequest="32"
+                                                                HeightRequest="32"
+                                                                Padding="0"
+                                                                BackgroundColor="{StaticResource ButtonBackground}"
+                                                                TextColor="White"
+                                                                CornerRadius="6"
+                                                                CommandParameter="{Binding .}"
+                                                                Clicked="OnDecrementStockClicked"/>
+                                                        <Entry Text="{Binding QuantityOwned}"
+                                                               Keyboard="Numeric"
+                                                               WidthRequest="55"
+                                                               HorizontalTextAlignment="Center"
+                                                               Style="{StaticResource EntryStyle}"/>
+                                                        <Button Text="+"
+                                                                FontSize="14"
+                                                                FontAttributes="Bold"
+                                                                WidthRequest="32"
+                                                                HeightRequest="32"
+                                                                Padding="0"
+                                                                BackgroundColor="{StaticResource ButtonBackground}"
+                                                                TextColor="White"
+                                                                CornerRadius="6"
+                                                                CommandParameter="{Binding .}"
+                                                                Clicked="OnIncrementStockClicked"/>
+                                                    </HorizontalStackLayout>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </BindableLayout.ItemTemplate>
+                                    </VerticalStackLayout>
+                                </VerticalStackLayout>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </Border>
+            </Grid>
+
+            <!-- Colonne 2 : Rentabilité des produits -->
+            <Grid Grid.Column="1" RowDefinitions="Auto, Auto, Auto, *" RowSpacing="10">
+                <Grid Grid.Row="0" ColumnDefinitions="*, Auto">
+                    <Label Grid.Column="0"
+                           Text="📈 RENTABILITÉ DES PRODUITS"
+                           Style="{StaticResource SectionTitleStyle}"
+                           VerticalOptions="Center"/>
+                    <Button Grid.Column="1"
+                            Text="🧪 Gérer les produits"
+                            FontSize="12"
+                            BackgroundColor="{DynamicResource ButtonBackground}"
+                            TextColor="White"
+                            CornerRadius="6"
+                            Padding="12,8"
+                            Clicked="OnManageProductsClicked"/>
+                </Grid>
+
+                <!-- Filtre par catégorie (le picker fait aussi office de liste des catégories) -->
+                <Grid Grid.Row="1" ColumnDefinitions="*, Auto, Auto" ColumnSpacing="10">
+                    <Picker Grid.Column="0"
+                            ItemsSource="{Binding FilterOptions}"
+                            ItemDisplayBinding="{Binding Name}"
+                            SelectedItem="{Binding SelectedFilter}"
+                            Style="{StaticResource PickerStyle}"
+                            Title="Filtrer par catégorie"/>
+                    <Button Grid.Column="1"
+                            Text="+ Catégorie"
+                            FontSize="12"
+                            BackgroundColor="{DynamicResource ButtonBackground}"
+                            TextColor="White"
+                            CornerRadius="6"
+                            Padding="12,8"
+                            Clicked="OnAddCategoryClicked"/>
+                    <Button Grid.Column="2"
+                            Text="🗑️"
+                            FontSize="14"
+                            BackgroundColor="{DynamicResource AccentRed}"
+                            TextColor="White"
+                            CornerRadius="6"
+                            Padding="12,8"
+                            Clicked="OnDeleteCategoryClicked"/>
+                </Grid>
+
+                <Picker Grid.Row="2"
+                        ItemsSource="{Binding ProductSortOptions}"
+                        SelectedItem="{Binding SelectedProductSort}"
+                        Style="{StaticResource PickerStyle}"
+                        Title="Trier par"/>
+
+                <Border Grid.Row="3" Style="{StaticResource CardStyle}">
+                    <CollectionView ItemsSource="{Binding ProductGroups}">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <VerticalStackLayout>
+                                    <Grid BackgroundColor="{StaticResource BackgroundCard}"
+                                          Padding="12,10">
+                                        <Label Text="{Binding HeaderText}"
+                                               FontSize="13"
+                                               FontAttributes="Bold"
+                                               TextColor="{StaticResource AccentGold}"
+                                               HorizontalOptions="Start"/>
+                                        <Grid.GestureRecognizers>
+                                            <TapGestureRecognizer Tapped="OnToggleProductGroupClicked"/>
+                                        </Grid.GestureRecognizers>
+                                    </Grid>
+
+                                    <VerticalStackLayout IsVisible="{Binding IsExpanded}"
+                                                         BindableLayout.ItemsSource="{Binding Items}">
+                                        <BindableLayout.ItemTemplate>
+                                            <DataTemplate>
+                                                <Grid Padding="12,10" RowDefinitions="Auto, Auto, Auto, Auto, Auto" RowSpacing="5">
+
+                                                    <Grid Grid.Row="0" ColumnDefinitions="*, Auto">
+                                                        <Label Grid.Column="0"
+                                                               Text="{Binding Name}"
+                                                               TextColor="{StaticResource TextPrimary}"
+                                                               FontSize="14"
+                                                               FontAttributes="Bold"/>
+                                                        <Label Grid.Column="1"
+                                                               Text="🏆 Meilleure marge"
+                                                               TextColor="{StaticResource AccentGold}"
+                                                               FontSize="11"
+                                                               FontAttributes="Bold"
+                                                               IsVisible="{Binding IsBestMargin}"/>
+                                                    </Grid>
+
+                                                    <Label Grid.Row="1"
+                                                           Text="{Binding CraftableSummary}"
+                                                           TextColor="{StaticResource TextSecondary}"
+                                                           FontSize="11"/>
+
+                                                    <Label Grid.Row="2" FontSize="11">
+                                                        <Label.FormattedText>
+                                                            <Binding Path="ResourcesSummary"/>
+                                                        </Label.FormattedText>
+                                                    </Label>
+
+                                                    <Grid Grid.Row="3" ColumnDefinitions="Auto, Auto, *" ColumnSpacing="8">
+                                                        <Label Grid.Column="0"
+                                                               Text="Possédé:"
+                                                               TextColor="{StaticResource TextSecondary}"
+                                                               FontSize="12"
+                                                               VerticalOptions="Center"/>
+                                                        <HorizontalStackLayout Grid.Column="1" Spacing="4" VerticalOptions="Center">
+                                                            <Button Text="−"
+                                                                    FontSize="14"
+                                                                    FontAttributes="Bold"
+                                                                    WidthRequest="32"
+                                                                    HeightRequest="32"
+                                                                    Padding="0"
+                                                                    BackgroundColor="{StaticResource ButtonBackground}"
+                                                                    TextColor="White"
+                                                                    CornerRadius="6"
+                                                                    CommandParameter="{Binding .}"
+                                                                    Clicked="OnDecrementProductClicked"/>
+                                                            <Entry Text="{Binding QuantityOwned}"
+                                                                   Keyboard="Numeric"
+                                                                   WidthRequest="55"
+                                                                   HorizontalTextAlignment="Center"
+                                                                   Style="{StaticResource EntryStyle}"/>
+                                                            <Button Text="+"
+                                                                    FontSize="14"
+                                                                    FontAttributes="Bold"
+                                                                    WidthRequest="32"
+                                                                    HeightRequest="32"
+                                                                    Padding="0"
+                                                                    BackgroundColor="{StaticResource ButtonBackground}"
+                                                                    TextColor="White"
+                                                                    CornerRadius="6"
+                                                                    CommandParameter="{Binding .}"
+                                                                    Clicked="OnIncrementProductClicked"/>
+                                                        </HorizontalStackLayout>
+                                                    </Grid>
+
+                                                    <Grid Grid.Row="4" ColumnDefinitions="Auto, Auto, *" ColumnSpacing="8">
+                                                        <Label Grid.Column="0"
+                                                               Text="Revente:"
+                                                               TextColor="{StaticResource TextSecondary}"
+                                                               FontSize="12"
+                                                               VerticalOptions="Center"/>
+                                                        <Entry Grid.Column="1"
+                                                               Text="{Binding ResalePrice}"
+                                                               Keyboard="Numeric"
+                                                               WidthRequest="90"
+                                                               Style="{StaticResource EntryStyle}"/>
+                                                        <Label Grid.Column="2"
+                                                               Text="{Binding MarginSummary}"
+                                                               TextColor="{Binding MarginColor}"
+                                                               FontAttributes="Bold"
+                                                               FontSize="12"
+                                                               HorizontalOptions="End"
+                                                               VerticalOptions="Center"/>
+                                                    </Grid>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </BindableLayout.ItemTemplate>
+                                    </VerticalStackLayout>
+                                </VerticalStackLayout>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </Border>
+            </Grid>
+
+        </Grid>
+    </Grid>
+</ContentPage>

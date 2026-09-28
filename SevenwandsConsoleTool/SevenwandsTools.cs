@@ -47,6 +47,19 @@ namespace SevenwandsConsoleTool
         {
             return (potion.Experience ?? 0) * quantity;
         }
+
+        /// <summary>
+        /// Calcule le coût de fabrication d'une seule potion à partir des prix des ingrédients,
+        /// sans muter la potion passée en paramètre (contrairement à CalculatePotionCosts).
+        /// </summary>
+        public static float CalculatePotionUnitCost(Potion potion, Dictionary<int, Ingredient> ingredients)
+        {
+            if (ingredients == null) throw new ArgumentNullException(nameof(ingredients));
+
+            return potion.Recipe
+                .Where(r => ingredients.ContainsKey(r.IngredientId) && ingredients[r.IngredientId].Price.HasValue)
+                .Sum(r => (ingredients[r.IngredientId].Price ?? 0) * r.Quantity);
+        }
         // ----------------------------------------------
 
         /// <summary>
@@ -277,6 +290,34 @@ namespace SevenwandsConsoleTool
             Console.WriteLine("✅ TokenTracking.json sauvegardé");
         }
 
+        /// <summary>
+        /// Désérialise les données Business (stock de ressources + prix de revente) depuis une chaîne JSON
+        /// </summary>
+        public static BusinessData DeserializeBusinessData(string json)
+        {
+            return JsonSerializer.Deserialize<BusinessData>(json) ?? new BusinessData();
+        }
+
+        /// <summary>
+        /// Charge les données Business depuis un fichier JSON
+        /// </summary>
+        public static async Task<BusinessData> LoadBusinessDataFromJson(string filePath)
+        {
+            var json = await File.ReadAllTextAsync(filePath);
+            return DeserializeBusinessData(json);
+        }
+
+        /// <summary>
+        /// Sauvegarde les données Business dans un fichier JSON
+        /// </summary>
+        public static async Task SaveBusinessDataToJson(string filePath, BusinessData data)
+        {
+            var options = CreateJsonOptions();
+            var json = JsonSerializer.Serialize(data, options);
+            await File.WriteAllTextAsync(filePath, json);
+            Console.WriteLine("✅ Business.json sauvegardé");
+        }
+
         #endregion
 
         #region Méthodes d'affichage
@@ -483,7 +524,30 @@ namespace SevenwandsConsoleTool
         Fire,
         ingredient,
         rotate,
-        spell
+        spell,
+        // Ajoutés en dernier pour ne pas décaler les valeurs numériques déjà sérialisées
+        // dans Ingredients.json.
+        // resource : ressource de stock pure, pas forcément liée à une recette de potion
+        // (matière première pour d'autres métiers : Forge, Auberge, ...).
+        resource,
+        // ingredientAndResource : à la fois utilisé dans une recette de potion ET suivi
+        // comme ressource de stock (ex: un minerai qui sert aussi à une potion).
+        ingredientAndResource
+    }
+
+    public static class IngredientTypeExtensions
+    {
+        // Types dont la quantité est réellement consommée/possédée en stock,
+        // par opposition à Fire/rotate/spell qui décrivent une étape de fabrication.
+        public static bool IsStockable(this IngredientType type)
+            => type == IngredientType.ingredient
+            || type == IngredientType.resource
+            || type == IngredientType.ingredientAndResource;
+
+        // Types utilisables dans le sélecteur d'ingrédient d'une recette de potion :
+        // tout sauf la ressource "pure" qui n'a rien à faire dans une potion.
+        public static bool IsUsableInPotionRecipe(this IngredientType type)
+            => type != IngredientType.resource;
     }
 
     // Classe pour les ingrédients dans une recette
@@ -561,7 +625,7 @@ namespace SevenwandsConsoleTool
                     .Select(r =>
                     {
                         if (ingredients.TryGetValue(r.IngredientId, out var ingredient) &&
-                            ingredient.Type == IngredientType.ingredient)
+                            ingredient.Type.IsStockable())
                         {
                             return new RecipeIngredient(r.IngredientId, r.Quantity * numberOfPotions);
                         }

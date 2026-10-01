@@ -63,7 +63,19 @@ namespace SevenwandsCompanion
         }
 
         public ObservableCollection<Ingredient> AvailableIngredients { get; set; } = new();
-        public ObservableCollection<RecipeIngredientViewModel> RecipeIngredients { get; set; } = new();
+
+        // Liste combinée des composants sélectionnables dans une recette : ingrédients bruts ET
+        // autres produits finis (ex: "Alcool de fée" peut être choisi directement comme composant
+        // de "Praline", au lieu de devoir exister en double comme ressource ET comme produit).
+        public ObservableCollection<RecipeComponentOption> AvailableComponents { get; set; } = new();
+        public ObservableCollection<RecipeComponentViewModel> RecipeComponents { get; set; } = new();
+
+        private bool _hasNoComponents = true;
+        public bool HasNoComponents
+        {
+            get => _hasNoComponents;
+            set { _hasNoComponents = value; OnPropertyChanged(); }
+        }
 
         // Champs du produit non exposés dans ce formulaire (spécifiques au système de potions)
         // mais préservés tels quels pour ne pas corrompre les données existantes.
@@ -146,22 +158,6 @@ namespace SevenwandsCompanion
                     SelectedCategory = resaleEntry?.CategoryId is int catId
                         ? AvailableCategories.FirstOrDefault(c => c.Id == catId) ?? _uncategorizedOption
                         : _uncategorizedOption;
-
-                    RecipeIngredients.Clear();
-                    foreach (var recipeItem in productToEdit.Recipe)
-                    {
-                        var ingredient = AvailableIngredients.FirstOrDefault(i => i.Id == recipeItem.IngredientId);
-                        if (ingredient != null)
-                        {
-                            RecipeIngredients.Add(new RecipeIngredientViewModel
-                            {
-                                AvailableIngredients = AvailableIngredients,
-                                SelectedIngredient = ingredient,
-                                Quantity = recipeItem.Quantity,
-                                IngredientId = ingredient.Id
-                            });
-                        }
-                    }
                 }
                 else
                 {
@@ -172,6 +168,52 @@ namespace SevenwandsCompanion
                     _existingExperience = 0;
                     SelectedCategory = _uncategorizedOption;
                 }
+
+                // Composants sélectionnables dans la recette : tous les ingrédients, plus tous les
+                // autres produits (un produit ne peut pas se référencer lui-même). Un produit et
+                // une ressource homonymes (ex: "Alcool de fée") apparaissent l'un à côté de
+                // l'autre, le badge (📦/🧪) permettant de les distinguer.
+                AvailableComponents.Clear();
+                foreach (var ingredient in AvailableIngredients)
+                {
+                    AvailableComponents.Add(new RecipeComponentOption
+                    {
+                        Kind = RecipeComponentKind.Ingredient,
+                        IngredientId = ingredient.Id,
+                        Name = ingredient.Name ?? ""
+                    });
+                }
+                foreach (var otherProduct in _allProducts.Where(p => p.Id != _productId).OrderBy(p => p.Name))
+                {
+                    AvailableComponents.Add(new RecipeComponentOption
+                    {
+                        Kind = RecipeComponentKind.Product,
+                        PotionId = otherProduct.Id,
+                        Name = otherProduct.Name ?? ""
+                    });
+                }
+
+                RecipeComponents.Clear();
+                if (productToEdit != null)
+                {
+                    foreach (var recipeItem in productToEdit.Recipe)
+                    {
+                        RecipeComponentOption? option = recipeItem.PotionId.HasValue
+                            ? AvailableComponents.FirstOrDefault(c => c.Kind == RecipeComponentKind.Product && c.PotionId == recipeItem.PotionId.Value)
+                            : AvailableComponents.FirstOrDefault(c => c.Kind == RecipeComponentKind.Ingredient && c.IngredientId == recipeItem.IngredientId);
+
+                        if (option != null)
+                        {
+                            RecipeComponents.Add(new RecipeComponentViewModel
+                            {
+                                AvailableComponents = AvailableComponents,
+                                SelectedComponent = option,
+                                Quantity = recipeItem.Quantity
+                            });
+                        }
+                    }
+                }
+                HasNoComponents = RecipeComponents.Count == 0;
             }
             catch (Exception ex)
             {
@@ -180,24 +222,26 @@ namespace SevenwandsCompanion
             }
         }
 
-        private void OnAddIngredientClicked(object sender, EventArgs e)
+        private void OnAddComponentClicked(object sender, EventArgs e)
         {
-            if (AvailableIngredients.Any())
+            if (AvailableComponents.Any())
             {
-                RecipeIngredients.Add(new RecipeIngredientViewModel
+                RecipeComponents.Add(new RecipeComponentViewModel
                 {
-                    AvailableIngredients = AvailableIngredients,
-                    SelectedIngredient = AvailableIngredients.First(),
+                    AvailableComponents = AvailableComponents,
+                    SelectedComponent = AvailableComponents.First(),
                     Quantity = 1
                 });
+                HasNoComponents = false;
             }
         }
 
-        private void OnRemoveIngredientClicked(object sender, EventArgs e)
+        private void OnRemoveComponentClicked(object sender, EventArgs e)
         {
-            if (sender is Button button && button.CommandParameter is RecipeIngredientViewModel item)
+            if (sender is Button button && button.CommandParameter is RecipeComponentViewModel item)
             {
-                RecipeIngredients.Remove(item);
+                RecipeComponents.Remove(item);
+                HasNoComponents = RecipeComponents.Count == 0;
             }
         }
 
@@ -209,14 +253,16 @@ namespace SevenwandsCompanion
                 return;
             }
 
-            var recipe = RecipeIngredients
-                .Where(ri => ri.SelectedIngredient != null && ri.Quantity > 0)
-                .Select(ri => new RecipeIngredient(ri.SelectedIngredient.Id, ri.Quantity))
+            var recipe = RecipeComponents
+                .Where(rc => rc.SelectedComponent != null && rc.Quantity > 0)
+                .Select(rc => rc.SelectedComponent!.Kind == RecipeComponentKind.Ingredient
+                    ? new RecipeIngredient(rc.SelectedComponent.IngredientId!.Value, rc.Quantity)
+                    : RecipeIngredient.ForProduct(rc.SelectedComponent.PotionId!.Value, rc.Quantity))
                 .ToList();
 
             if (!recipe.Any())
             {
-                await DisplayAlert("Erreur", "Le produit doit avoir au moins un ingrédient dans sa recette.", "OK");
+                await DisplayAlert("Erreur", "Le produit doit avoir au moins un composant (ingrédient ou produit) dans sa recette.", "OK");
                 return;
             }
 
@@ -230,6 +276,7 @@ namespace SevenwandsCompanion
                 SellPrice = SellPrice,
                 Experience = _existingExperience,
                 Order = _existingOrder,
+                IsBusinessProduct = true,
                 Recipe = recipe
             };
 
@@ -305,6 +352,53 @@ namespace SevenwandsCompanion
             {
                 await Shell.Current.GoToAsync("..");
             }
+        }
+    }
+
+    // Type d'un composant sélectionnable dans la recette d'un produit.
+    public enum RecipeComponentKind
+    {
+        Ingredient,
+        Product
+    }
+
+    // Une option sélectionnable dans le Picker d'une ligne de recette : soit un ingrédient
+    // (Ingredients.json), soit un autre produit fini (Potions.json). Permet à un produit d'entrer
+    // directement dans la recette d'un autre sans avoir à exister en double comme ressource ET
+    // comme produit (ex: "Alcool de fée").
+    public class RecipeComponentOption
+    {
+        public RecipeComponentKind Kind { get; set; }
+        public int? IngredientId { get; set; }
+        public int? PotionId { get; set; }
+        public string Name { get; set; } = "";
+
+        public string DisplayName => Kind == RecipeComponentKind.Ingredient ? $"📦 {Name}" : $"🧪 {Name}";
+    }
+
+    // ViewModel pour une ligne de recette du ProductEditorPage (distinct de RecipeIngredientViewModel
+    // utilisé par le Créateur de Potions d'origine, qui ne gère que les ingrédients).
+    public class RecipeComponentViewModel : BindableObject
+    {
+        private ObservableCollection<RecipeComponentOption> _availableComponents = new();
+        public ObservableCollection<RecipeComponentOption> AvailableComponents
+        {
+            get => _availableComponents;
+            set { _availableComponents = value; OnPropertyChanged(); }
+        }
+
+        private RecipeComponentOption? _selectedComponent;
+        public RecipeComponentOption? SelectedComponent
+        {
+            get => _selectedComponent;
+            set { _selectedComponent = value; OnPropertyChanged(); }
+        }
+
+        private int _quantity = 1;
+        public int Quantity
+        {
+            get => _quantity;
+            set { _quantity = value; OnPropertyChanged(); }
         }
     }
 }

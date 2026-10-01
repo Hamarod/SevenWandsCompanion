@@ -123,6 +123,11 @@
                                                         <Label Text="{Binding CategoriesDisplay}"
                                                                TextColor="{StaticResource TextSecondary}"
                                                                FontSize="10"/>
+                                                        <Label Text="{Binding ShortfallDisplay}"
+                                                               TextColor="IndianRed"
+                                                               FontSize="12"
+                                                               FontAttributes="Bold"
+                                                               IsVisible="{Binding HasShortfall}"/>
                                                     </VerticalStackLayout>
 
                                                     <Label Grid.Column="1"

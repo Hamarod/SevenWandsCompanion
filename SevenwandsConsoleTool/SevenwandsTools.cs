@@ -532,7 +532,16 @@ namespace SevenwandsConsoleTool
         resource,
         // ingredientAndResource : à la fois utilisé dans une recette de potion ET suivi
         // comme ressource de stock (ex: un minerai qui sert aussi à une potion).
-        ingredientAndResource
+        ingredientAndResource,
+        // resourceAndProduct : ressource de stock ET produit fini vendable directement tel
+        // quel à un autre joueur (sans recette), sans avoir à dupliquer sa fiche dans
+        // Potions.json (ex: Alcool de fée récolté brut et revendu tel quel). La quantité
+        // possédée est UNE seule valeur partagée entre l'onglet Ressources et l'onglet
+        // Produits de Business.
+        resourceAndProduct,
+        // ingredientAndResourceAndProduct : cumule les trois - utilisable dans une recette de
+        // potion, suivi comme ressource de stock, ET vendable directement comme produit fini.
+        ingredientAndResourceAndProduct
     }
 
     public static class IngredientTypeExtensions
@@ -542,12 +551,22 @@ namespace SevenwandsConsoleTool
         public static bool IsStockable(this IngredientType type)
             => type == IngredientType.ingredient
             || type == IngredientType.resource
-            || type == IngredientType.ingredientAndResource;
+            || type == IngredientType.ingredientAndResource
+            || type == IngredientType.resourceAndProduct
+            || type == IngredientType.ingredientAndResourceAndProduct;
 
         // Types utilisables dans le sélecteur d'ingrédient d'une recette de potion :
-        // tout sauf la ressource "pure" qui n'a rien à faire dans une potion.
+        // tout sauf les ressources "pures" (avec ou sans volet produit) qui n'ont rien à faire
+        // dans une potion.
         public static bool IsUsableInPotionRecipe(this IngredientType type)
-            => type != IngredientType.resource;
+            => type != IngredientType.resource
+            && type != IngredientType.resourceAndProduct;
+
+        // Vendable directement comme produit fini dans l'onglet Produits de Business (sans
+        // recette), en plus d'être suivi comme ressource de stock dans l'onglet Ressources.
+        public static bool IsSellableAsProduct(this IngredientType type)
+            => type == IngredientType.resourceAndProduct
+            || type == IngredientType.ingredientAndResourceAndProduct;
     }
 
     // Classe pour les ingrédients dans une recette
@@ -559,6 +578,15 @@ namespace SevenwandsConsoleTool
         [JsonPropertyName("quantity")]
         public int Quantity { get; set; }
 
+        // Référence un autre Produit (Potion) plutôt qu'un Ingrédient : permet à un produit fini
+        // (ex: "Chocolat") d'être lui-même consommé comme composant de la recette d'un autre
+        // produit (ex: "Praline"). Mutuellement exclusif avec IngredientId, qui vaut alors 0 et
+        // n'est pas utilisé.
+        [JsonPropertyName("potion_id")]
+        public int? PotionId { get; set; }
+
+        public bool IsProductReference => PotionId.HasValue;
+
         public RecipeIngredient(int ingredientId, int quantity)
         {
             IngredientId = ingredientId;
@@ -566,6 +594,9 @@ namespace SevenwandsConsoleTool
         }
 
         public RecipeIngredient() { }
+
+        public static RecipeIngredient ForProduct(int potionId, int quantity)
+            => new RecipeIngredient { PotionId = potionId, Quantity = quantity };
     }
 
     // Classe Potion
@@ -604,6 +635,13 @@ namespace SevenwandsConsoleTool
         [JsonPropertyName("recipe")]
         public List<RecipeIngredient> Recipe { get; set; }
 
+        // true quand ce Potion a été créé/édité depuis l'écran Produits de Business
+        // (ProductEditorPage), plutôt que depuis le Créateur de Potions d'origine : sert à
+        // exclure les "produits classiques" business-only de la liste des potions jouables
+        // (MainPage), sans les retirer de Potions.json (toujours utilisés par Business).
+        [JsonPropertyName("is_business_product")]
+        public bool IsBusinessProduct { get; set; }
+
         public Potion()
         {
             Recipe = new List<RecipeIngredient>();
@@ -621,6 +659,7 @@ namespace SevenwandsConsoleTool
                 SellPrice = this.SellPrice,
                 Experience = this.Experience, // --- AJOUT : Copie de l'expérience de base ---
                 Order = this.Order,
+                IsBusinessProduct = this.IsBusinessProduct,
                 Recipe = this.Recipe
                     .Select(r =>
                     {

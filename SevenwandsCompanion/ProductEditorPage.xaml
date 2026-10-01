@@ -76,8 +76,8 @@
                     <Label Text="📜 RECETTE"
                            Style="{StaticResource SectionTitleStyle}"/>
 
-                    <CollectionView ItemsSource="{Binding RecipeIngredients}">
-                        <CollectionView.ItemTemplate>
+                    <VerticalStackLayout BindableLayout.ItemsSource="{Binding RecipeComponents}" Spacing="0">
+                        <BindableLayout.ItemTemplate>
                             <DataTemplate>
                                 <Border Style="{StaticResource CardStyle}"
                                         BackgroundColor="{StaticResource BackgroundDark}"
@@ -85,9 +85,9 @@
                                         Padding="12">
                                     <Grid ColumnDefinitions="*, Auto, Auto, Auto" ColumnSpacing="10">
                                         <Picker Grid.Column="0"
-                                                ItemsSource="{Binding AvailableIngredients}"
-                                                ItemDisplayBinding="{Binding Name}"
-                                                SelectedItem="{Binding SelectedIngredient, Mode=TwoWay}"
+                                                ItemsSource="{Binding AvailableComponents}"
+                                                ItemDisplayBinding="{Binding DisplayName}"
+                                                SelectedItem="{Binding SelectedComponent, Mode=TwoWay}"
                                                 Style="{StaticResource PickerStyle}"
                                                 VerticalOptions="Center"/>
 
@@ -114,28 +114,28 @@
                                                 TextColor="White"
                                                 CornerRadius="6"
                                                 CommandParameter="{Binding .}"
-                                                Clicked="OnRemoveIngredientClicked"
+                                                Clicked="OnRemoveComponentClicked"
                                                 VerticalOptions="Center"/>
                                     </Grid>
                                 </Border>
                             </DataTemplate>
-                        </CollectionView.ItemTemplate>
-                        <CollectionView.EmptyView>
-                            <Label Text="Aucun ingrédient ajouté. Cliquez sur '+ Ajouter ingrédient' ci-dessous pour commencer."
-                                   TextColor="{StaticResource TextSecondary}"
-                                   FontSize="12"
-                                   HorizontalOptions="Center"
-                                   Margin="0,20"/>
-                        </CollectionView.EmptyView>
-                    </CollectionView>
+                        </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
 
-                    <Button Text="+ Ajouter ingrédient"
+                    <Label Text="Aucun composant ajouté. Cliquez sur '+ Ajouter un composant' ci-dessous pour commencer."
+                           TextColor="{StaticResource TextSecondary}"
+                           FontSize="12"
+                           HorizontalOptions="Center"
+                           Margin="0,20"
+                           IsVisible="{Binding HasNoComponents}"/>
+
+                    <Button Text="+ Ajouter un composant (ingrédient ou produit)"
                             FontSize="12"
                             BackgroundColor="{DynamicResource ButtonBackground}"
                             TextColor="White"
                             CornerRadius="6"
                             Padding="15,10"
-                            Clicked="OnAddIngredientClicked"/>
+                            Clicked="OnAddComponentClicked"/>
                 </VerticalStackLayout>
             </Border>
 

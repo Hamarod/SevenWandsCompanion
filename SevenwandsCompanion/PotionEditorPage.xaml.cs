@@ -450,10 +450,19 @@ namespace SevenwandsCompanion
                 return;
             }
 
+            // Les composants "produit" (un produit référencé comme ingrédient d'un autre, ajouté
+            // depuis l'éditeur de produit Business) ne sont pas éditables dans cet écran, qui ne
+            // connaît que les ingrédients : on les préserve tels quels pour ne pas les perdre en
+            // écrasant la recette avec RecipeIngredients ci-dessous.
+            var preservedProductComponents = (EditedPotion.Recipe ?? new List<RecipeIngredient>())
+                .Where(r => r.PotionId.HasValue)
+                .ToList();
+
             // Construire la recette depuis RecipeIngredients
             EditedPotion.Recipe = RecipeIngredients
                 .Where(ri => ri.SelectedIngredient != null && ri.Quantity > 0)
                 .Select(ri => new RecipeIngredient(ri.SelectedIngredient.Id, ri.Quantity))
+                .Concat(preservedProductComponents)
                 .ToList();
 
             if (!EditedPotion.Recipe.Any())

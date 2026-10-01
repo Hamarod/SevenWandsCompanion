@@ -161,7 +161,7 @@
                                 <Label Text="Prix (Gallyons) - Optionnel" 
                                        TextColor="{StaticResource TextSecondary}" 
                                        FontSize="12"/>
-                                <Entry Text="{Binding EditedIngredient.Price}" 
+                                <Entry Text="{Binding EditedIngredient.PriceText}"
                                        Keyboard="Numeric"
                                        Style="{StaticResource EntryStyle}"
                                        Placeholder="Laissez vide si non achetable"/>

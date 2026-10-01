@@ -140,8 +140,10 @@ namespace SevenwandsCompanion
                 string potionsJson = await File.ReadAllTextAsync(appDataPotionsPath);
                 var potions = SevenwandsTools.DeserializePotions(potionsJson);
                 MesPotions.Clear();
-                // TRI PAR ORDER à l'initialisation
-                foreach (var p in potions.OrderBy(x => x.Order)) MesPotions.Add(p);
+                // TRI PAR ORDER à l'initialisation. Exclut les "produits classiques" créés depuis
+                // l'écran Produits de Business (ProductEditorPage) : ce sont des entrées
+                // commerciales (stock/revente), pas des potions jouables.
+                foreach (var p in potions.Where(x => !x.IsBusinessProduct).OrderBy(x => x.Order)) MesPotions.Add(p);
                 System.Diagnostics.Debug.WriteLine($"🧪 MainPage: {MesPotions.Count} potions chargées depuis AppDataDirectory");
 
                 // Initialize filtered list with all potions
@@ -353,9 +355,9 @@ namespace SevenwandsCompanion
                 string potionsJson = await File.ReadAllTextAsync(appDataPotionsPath);
                 var potions = SevenwandsTools.DeserializePotions(potionsJson);
 
-                // TRI PAR ORDER pour affichage correct
+                // TRI PAR ORDER pour affichage correct. Exclut les produits Business (voir plus haut).
                 MesPotions.Clear();
-                foreach (var p in potions.OrderBy(x => x.Order))
+                foreach (var p in potions.Where(x => !x.IsBusinessProduct).OrderBy(x => x.Order))
                 {
                     MesPotions.Add(p);
                 }

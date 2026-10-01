@@ -9,6 +9,7 @@ namespace SevenwandsCompanion
     public partial class ResourceEditorPage : ContentPage
     {
         private const string IngredientsAssetPath = "Ingredients.json";
+        private const string PotionsAssetPath = "Potions.json";
         private const string BusinessAssetPath = "Business.json";
 
         private bool _isEditMode;
@@ -39,21 +40,78 @@ namespace SevenwandsCompanion
         {
             IngredientType.ingredient,
             IngredientType.resource,
-            IngredientType.ingredientAndResource
+            IngredientType.ingredientAndResource,
+            IngredientType.resourceAndProduct,
+            IngredientType.ingredientAndResourceAndProduct
         };
 
         private IngredientType _selectedType = IngredientType.ingredient;
         public IngredientType SelectedType
         {
             get => _selectedType;
-            set { _selectedType = value; OnPropertyChanged(); }
+            set
+            {
+                _selectedType = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(IsProductType));
+            }
         }
 
+        // Affiche la section "Recette" uniquement pour les types vendables directement comme
+        // produit (resourceAndProduct/ingredientAndResourceAndProduct) : une ressource "pure"
+        // n'a rien à fabriquer. Cette même ressource apparaît alors aussi côté Produits, classée
+        // sous SES PROPRES catégories (CategoryToggles ci-dessous) : pas de catégorisation
+        // séparée à refaire pour le même élément physique.
+        public bool IsProductType => SelectedType.IsSellableAsProduct();
+
+        // Liste combinée des composants sélectionnables dans la recette de cette ressource-
+        // produit : les autres ingrédients (elle-même exclue) ET tous les produits (Potions).
+        public ObservableCollection<RecipeComponentOption> AvailableComponents { get; set; } = new();
+        public ObservableCollection<RecipeComponentViewModel> RecipeComponents { get; set; } = new();
+
+        private bool _hasNoRecipeComponents = true;
+        public bool HasNoRecipeComponents
+        {
+            get => _hasNoRecipeComponents;
+            set { _hasNoRecipeComponents = value; OnPropertyChanged(); }
+        }
+
+        // Price reste float? (utilisé pour la sauvegarde), mais l'Entry se lie à PriceText
+        // (string) : un binding direct Entry.Text <-> float? ne sait pas représenter "vide" (une
+        // chaîne vide ne convertit pas vers null), donc MAUI annule la saisie et réaffiche
+        // l'ancienne valeur dès qu'on efface le champ. PriceText gère "vide" explicitement.
         private float? _price;
         public float? Price
         {
             get => _price;
-            set { _price = value; OnPropertyChanged(); }
+            set
+            {
+                if (_price != value)
+                {
+                    _price = value;
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(PriceText));
+                }
+            }
+        }
+
+        public string PriceText
+        {
+            get => _price?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "";
+            set
+            {
+                if (string.IsNullOrWhiteSpace(value))
+                {
+                    Price = null;
+                }
+                else if (float.TryParse(value, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.CurrentCulture, out var parsed)
+                    || float.TryParse(value, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out parsed))
+                {
+                    Price = parsed;
+                }
+                // Saisie partielle/invalide (ex: "-", "1.") : on n'écrase pas Price, l'utilisateur
+                // continue de taper.
+            }
         }
 
         // Catégories métier assignables à cette ressource (une ressource peut appartenir
@@ -62,6 +120,7 @@ namespace SevenwandsCompanion
 
         private int _resourceId;
         private Dictionary<int, Ingredient> _allResources = new();
+        private List<Potion> _allProducts = new();
         private BusinessData _businessData = new();
 
         public ResourceEditorPage()
@@ -90,12 +149,20 @@ namespace SevenwandsCompanion
 
                 _allResources = SevenwandsTools.DeserializeIngredients(await File.ReadAllTextAsync(appDataPath));
 
+                string productsPath = Path.Combine(FileSystem.AppDataDirectory, PotionsAssetPath);
+                if (!File.Exists(productsPath))
+                {
+                    await SevenwandsTools.SavePotionsToJson(productsPath, new List<Potion>());
+                }
+                _allProducts = SevenwandsTools.DeserializePotions(await File.ReadAllTextAsync(productsPath));
+
                 string businessPath = Path.Combine(FileSystem.AppDataDirectory, BusinessAssetPath);
                 _businessData = File.Exists(businessPath)
                     ? await SevenwandsTools.LoadBusinessDataFromJson(businessPath)
                     : new BusinessData();
 
                 List<int> assignedCategoryIds = new();
+                List<RecipeIngredient> existingProductRecipe = new();
 
                 if (resourceToEdit != null)
                 {
@@ -115,6 +182,7 @@ namespace SevenwandsCompanion
                         assignedCategoryIds = existingStock.CategoryIds.Any()
                             ? existingStock.CategoryIds
                             : (existingStock.LegacyCategoryId.HasValue ? new List<int> { existingStock.LegacyCategoryId.Value } : new List<int>());
+                        existingProductRecipe = existingStock.ProductRecipe;
                     }
                 }
                 else
@@ -127,6 +195,48 @@ namespace SevenwandsCompanion
                 {
                     CategoryToggles.Add(new CategoryToggleOption(category, assignedCategoryIds.Contains(category.Id)));
                 }
+
+                // Composants sélectionnables dans la recette de cette ressource-produit : les
+                // autres ingrédients (elle-même exclue, ne peut pas se référencer elle-même) et
+                // tous les produits.
+                AvailableComponents.Clear();
+                foreach (var otherIngredient in _allResources.Values.Where(i => i.Id != _resourceId).OrderBy(i => i.Name))
+                {
+                    AvailableComponents.Add(new RecipeComponentOption
+                    {
+                        Kind = RecipeComponentKind.Ingredient,
+                        IngredientId = otherIngredient.Id,
+                        Name = otherIngredient.Name ?? ""
+                    });
+                }
+                foreach (var product in _allProducts.OrderBy(p => p.Name))
+                {
+                    AvailableComponents.Add(new RecipeComponentOption
+                    {
+                        Kind = RecipeComponentKind.Product,
+                        PotionId = product.Id,
+                        Name = product.Name ?? ""
+                    });
+                }
+
+                RecipeComponents.Clear();
+                foreach (var recipeItem in existingProductRecipe)
+                {
+                    RecipeComponentOption? option = recipeItem.PotionId.HasValue
+                        ? AvailableComponents.FirstOrDefault(c => c.Kind == RecipeComponentKind.Product && c.PotionId == recipeItem.PotionId.Value)
+                        : AvailableComponents.FirstOrDefault(c => c.Kind == RecipeComponentKind.Ingredient && c.IngredientId == recipeItem.IngredientId);
+
+                    if (option != null)
+                    {
+                        RecipeComponents.Add(new RecipeComponentViewModel
+                        {
+                            AvailableComponents = AvailableComponents,
+                            SelectedComponent = option,
+                            Quantity = recipeItem.Quantity
+                        });
+                    }
+                }
+                HasNoRecipeComponents = RecipeComponents.Count == 0;
             }
             catch (Exception ex)
             {
@@ -157,14 +267,28 @@ namespace SevenwandsCompanion
                 string appDataPath = Path.Combine(FileSystem.AppDataDirectory, IngredientsAssetPath);
                 await SevenwandsTools.SaveIngredientsToJson(appDataPath, _allResources);
 
-                // Met à jour les catégories assignées dans Business.json, en conservant
-                // la quantité déjà possédée (gérée depuis l'écran Business, pas ici).
+                // Met à jour les catégories assignées et la recette "produit" dans Business.json,
+                // en conservant la quantité possédée, le prix de revente et la catégorie produit
+                // déjà existants (gérés depuis l'écran Business, pas ici) — sinon chaque
+                // enregistrement depuis cet écran les écraserait à zéro.
                 var selectedCategoryIds = CategoryToggles.Where(t => t.IsSelected).Select(t => t.Category.Id).ToList();
                 var existingStock = _businessData.IngredientStocks.FirstOrDefault(s => s.IngredientId == resource.Id);
-                int quantityOwned = existingStock?.QuantityOwned ?? 0;
+
+                var productRecipe = RecipeComponents
+                    .Where(rc => rc.SelectedComponent != null && rc.Quantity > 0)
+                    .Select(rc => rc.SelectedComponent!.Kind == RecipeComponentKind.Ingredient
+                        ? new RecipeIngredient(rc.SelectedComponent.IngredientId!.Value, rc.Quantity)
+                        : RecipeIngredient.ForProduct(rc.SelectedComponent.PotionId!.Value, rc.Quantity))
+                    .ToList();
+
+                var newStock = new IngredientStock(resource.Id, existingStock?.QuantityOwned ?? 0, selectedCategoryIds)
+                {
+                    ResalePrice = existingStock?.ResalePrice ?? 0,
+                    ProductRecipe = productRecipe
+                };
 
                 _businessData.IngredientStocks.RemoveAll(s => s.IngredientId == resource.Id);
-                _businessData.IngredientStocks.Add(new IngredientStock(resource.Id, quantityOwned, selectedCategoryIds));
+                _businessData.IngredientStocks.Add(newStock);
 
                 string businessPath = Path.Combine(FileSystem.AppDataDirectory, BusinessAssetPath);
                 await SevenwandsTools.SaveBusinessDataToJson(businessPath, _businessData);
@@ -176,6 +300,29 @@ namespace SevenwandsCompanion
             {
                 await DisplayAlert("Erreur", $"Erreur lors de la sauvegarde: {ex.Message}", "OK");
                 System.Diagnostics.Debug.WriteLine($"Save error: {ex.Message}");
+            }
+        }
+
+        private void OnAddRecipeComponentClicked(object sender, EventArgs e)
+        {
+            if (AvailableComponents.Any())
+            {
+                RecipeComponents.Add(new RecipeComponentViewModel
+                {
+                    AvailableComponents = AvailableComponents,
+                    SelectedComponent = AvailableComponents.First(),
+                    Quantity = 1
+                });
+                HasNoRecipeComponents = false;
+            }
+        }
+
+        private void OnRemoveRecipeComponentClicked(object sender, EventArgs e)
+        {
+            if (sender is Button button && button.CommandParameter is RecipeComponentViewModel item)
+            {
+                RecipeComponents.Remove(item);
+                HasNoRecipeComponents = RecipeComponents.Count == 0;
             }
         }
 

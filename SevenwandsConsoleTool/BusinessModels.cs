@@ -48,6 +48,21 @@ namespace SevenwandsConsoleTool
         [JsonPropertyName("category_id")]
         public int? LegacyCategoryId { get; set; }
 
+        // Prix de revente pratiqué quand cette ressource est aussi vendue directement comme
+        // produit fini (Type resourceAndProduct/ingredientAndResourceAndProduct). La quantité
+        // possédée n'est PAS dupliquée : QuantityOwned ci-dessus fait foi pour les deux vues
+        // (Ressources et Produits) de Business.
+        [JsonPropertyName("resale_price")]
+        public float ResalePrice { get; set; }
+
+        // Recette optionnelle : ressources et/ou autres produits nécessaires pour "fabriquer"
+        // cette ressource quand elle est vendue comme produit (Type resourceAndProduct/
+        // ingredientAndResourceAndProduct). Vide pour une ressource brute (récoltée telle quelle,
+        // sans rien nécessiter). Purement informatif (comme la recette d'un Potion) : incrémenter
+        // Possédé ne décrémente pas automatiquement ces composants.
+        [JsonPropertyName("product_recipe")]
+        public List<RecipeIngredient> ProductRecipe { get; set; } = new();
+
         public IngredientStock() { }
 
         public IngredientStock(int ingredientId, int quantityOwned, List<int>? categoryIds = null)

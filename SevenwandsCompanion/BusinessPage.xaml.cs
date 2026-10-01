@@ -28,8 +28,17 @@ namespace SevenwandsCompanion
         private float _treasury;
         public string TreasuryDisplay => $"🪙 Cagnotte: {GallyonsFormat.Format0(_treasury)} Gallyons";
 
-        private int _pendingOrdersCount;
-        public string OrdersButtonText => $"📋 Commandes ({_pendingOrdersCount})";
+        // "N" (aucune commande terminée) ou "N/M" (N en cours, M terminées) : le "/M" est omis
+        // quand M vaut 0 pour ne pas afficher "0" inutilement.
+        public string OrdersButtonText
+        {
+            get
+            {
+                int pending = _orders.Count(o => !o.IsCompleted);
+                int completed = _orders.Count(o => o.IsCompleted);
+                return completed > 0 ? $"📋 Commandes ({pending}/{completed})" : $"📋 Commandes ({pending})";
+            }
+        }
 
         // Catégories réellement persistées (créées/supprimées par l'utilisateur),
         // partagées entre les ressources et les produits finis.
@@ -138,6 +147,8 @@ namespace SevenwandsCompanion
             ProductSortOptions.Add(new SortOption<PotionProfitViewModel>("Coût (décroissant)", items => items.OrderByDescending(i => i.UnitCost)));
             ProductSortOptions.Add(new SortOption<PotionProfitViewModel>("Fabricables (croissant)", items => items.OrderBy(i => i.MaxCraftable)));
             ProductSortOptions.Add(new SortOption<PotionProfitViewModel>("Fabricables (décroissant)", items => items.OrderByDescending(i => i.MaxCraftable)));
+            ProductSortOptions.Add(new SortOption<PotionProfitViewModel>("Besoin (croissant)", items => items.OrderBy(i => i.TotalShortfall)));
+            ProductSortOptions.Add(new SortOption<PotionProfitViewModel>("Besoin (décroissant)", items => items.OrderByDescending(i => i.TotalShortfall)));
             ProductSortOptions.Add(new SortOption<PotionProfitViewModel>("Catégorie", items => items.OrderBy(i => i.SelectedCategory?.Name ?? "")));
             _selectedProductSort = ProductSortOptions.First(o => o.Label == "Quantité possédée (décroissant)");
 
@@ -189,7 +200,6 @@ namespace SevenwandsCompanion
                 _orders = businessData.Orders;
                 _treasury = businessData.Treasury;
                 OnPropertyChanged(nameof(TreasuryDisplay));
-                _pendingOrdersCount = businessData.Orders.Count(o => !o.IsCompleted);
                 OnPropertyChanged(nameof(OrdersButtonText));
 
                 System.Diagnostics.Debug.WriteLine($"📦 BusinessPage: {StockItems.Count} ressources, {PotionProfits.Count} produits, {Categories.Count} catégories chargées");
@@ -318,10 +328,13 @@ namespace SevenwandsCompanion
             ScheduleApplyFiltersAndSave();
         }
 
-        // Un changement sur un produit (prix de revente, quantité possédée, catégorie) n'affecte
-        // pas le stock de ressources : pas besoin de recalculer les compteurs fabricables.
+        // Un changement sur un produit (prix de revente, quantité possédée, catégorie) peut
+        // affecter le fabricable d'un AUTRE produit qui le référence comme composant de recette
+        // (ex: la quantité de "Chocolat" possédée influe sur le fabricable de "Praline") : on
+        // recalcule donc aussi les compteurs fabricables ici, comme pour le stock de ressources.
         private void OnProductItemChanged(object? sender, EventArgs e)
         {
+            RefreshCraftableCounts();
             ScheduleApplyFiltersAndSave();
         }
 
@@ -370,22 +383,236 @@ namespace SevenwandsCompanion
             }
         }
 
-        // Liste des ressources physiques (stockables) qu'une recette consomme, avec la quantité
-        // déjà possédée en stock pour chacune — sert à afficher le détail par ressource (à la
-        // place d'un simple nombre "Fabricables") et à calculer ce nombre pour le tri.
-        private static List<ResourceRequirement> BuildResourceRequirements(Potion potion, Dictionary<int, Ingredient> ingredientsDict, Dictionary<int, int> stockByIngredientId)
+        // Liste des ressources physiques (stockables) et/ou produits finis qu'une recette
+        // consomme, avec la quantité déjà possédée en stock pour chacun — sert à afficher le
+        // détail par ressource (à la place d'un simple nombre "Fabricables") et à calculer ce
+        // nombre pour le tri. Un composant "produit" (recette d'un produit référençant un autre
+        // produit, ex: Chocolat dans la recette de Praline) est traité exactement comme une
+        // ressource : son stock possédé fait foi, sans distinction dans l'affichage ni le calcul.
+        // "recipe" vient soit de Potion.Recipe, soit de IngredientStock.ProductRecipe (une
+        // ressource-produit peut aussi avoir sa propre "recette" de composants).
+        // "ownerMissingAmount" est le nombre d'unités de la recette elle-même qu'il reste à
+        // produire (voir ComputeMissingProduction ci-dessous : déjà netté du stock possédé de la
+        // recette elle-même) : sert à calculer, pour chaque composant, le manque agrégé sur toute
+        // la chaîne (ownerMissingAmount × ratio - possédé), et non plus juste le ratio par unité.
+        private static List<ResourceRequirement> BuildResourceRequirements(
+            List<RecipeIngredient> recipe,
+            Dictionary<int, Ingredient> ingredientsDict,
+            Dictionary<int, int> stockByIngredientId,
+            Dictionary<int, Potion> potionsById,
+            Dictionary<int, int> stockByPotionId,
+            int ownerMissingAmount)
         {
-            return potion.Recipe
-                .Where(r => r.Quantity > 0
-                    && ingredientsDict.TryGetValue(r.IngredientId, out var ing)
-                    && ing.Type.IsStockable())
-                .Select(r => new ResourceRequirement
+            var requirements = new List<ResourceRequirement>();
+
+            foreach (var r in recipe)
+            {
+                if (r.Quantity <= 0) continue;
+
+                if (r.PotionId.HasValue)
                 {
-                    Name = ingredientsDict[r.IngredientId].Name ?? "?",
-                    Owned = stockByIngredientId.TryGetValue(r.IngredientId, out var owned) ? owned : 0,
-                    NeededPerUnit = r.Quantity
-                })
-                .ToList();
+                    if (!potionsById.TryGetValue(r.PotionId.Value, out var subProduct)) continue;
+                    int owned = stockByPotionId.TryGetValue(r.PotionId.Value, out var o) ? o : 0;
+                    requirements.Add(new ResourceRequirement
+                    {
+                        Name = subProduct.Name ?? "?",
+                        Owned = owned,
+                        NeededPerUnit = r.Quantity,
+                        AggregateShortfall = Math.Max(0, ownerMissingAmount * r.Quantity - owned)
+                    });
+                }
+                else if (ingredientsDict.TryGetValue(r.IngredientId, out var ing) && ing.Type.IsStockable())
+                {
+                    int owned = stockByIngredientId.TryGetValue(r.IngredientId, out var o) ? o : 0;
+                    requirements.Add(new ResourceRequirement
+                    {
+                        Name = ing.Name ?? "?",
+                        Owned = owned,
+                        NeededPerUnit = r.Quantity,
+                        AggregateShortfall = Math.Max(0, ownerMissingAmount * r.Quantity - owned)
+                    });
+                }
+            }
+
+            return requirements;
+        }
+
+        // Additionne, pour chaque produit et ressource demandés par une commande, la quantité
+        // demandée sur TOUTES les commandes en cours (pas les commandes déjà terminées, dont le
+        // stock a déjà été livré) : c'est le point de départ ("demande directe") du calcul de
+        // manque agrégé.
+        private static (Dictionary<int, int> ByPotion, Dictionary<int, int> ByIngredient) ComputePendingOrderDemand(List<Order> orders)
+        {
+            var byPotion = new Dictionary<int, int>();
+            var byIngredient = new Dictionary<int, int>();
+
+            foreach (var order in orders.Where(o => !o.IsCompleted))
+            {
+                foreach (var item in order.Items)
+                {
+                    byPotion[item.PotionId] = byPotion.GetValueOrDefault(item.PotionId) + item.Quantity;
+                }
+                foreach (var resourceItem in order.ResourceItems)
+                {
+                    byIngredient[resourceItem.IngredientId] = byIngredient.GetValueOrDefault(resourceItem.IngredientId) + resourceItem.Quantity;
+                }
+            }
+
+            return (byPotion, byIngredient);
+        }
+
+        // Calcule, pour CHAQUE produit/ressource-produit du catalogue entier, la quantité "à
+        // produire en plus" (manquante) qui détermine le manque affiché à côté de chaque
+        // composant de sa recette. Type MRP (Material Requirements Planning) : à chaque étage, on
+        // NETTE la demande contre ce qui est déjà possédé AVANT de la redescendre plus bas - sinon
+        // un produit déjà partiellement en stock (ex: 9 Cognac déjà possédés sur 100 commandés)
+        // ferait redescendre une demande de ressources pour la totalité (100), alors que les 9
+        // déjà fabriqués ont déjà consommé leurs propres ressources dans le passé.
+        // Manquant(N) = max(0, CibleBrute(N) - Possédé(N))
+        // CibleBrute(N) = demande directe des commandes EN COURS + Σ Manquant(consommateur) × ratio
+        // "visiting" (via le cache mémoïsé) protège contre une dépendance circulaire.
+        private static Dictionary<string, int> ComputeMissingProduction(
+            List<Potion> potions,
+            Dictionary<int, List<RecipeIngredient>> productRecipeByIngredientId,
+            Dictionary<int, Ingredient> ingredientsDict,
+            Dictionary<int, int> stockByIngredientId,
+            Dictionary<int, int> stockByPotionId,
+            Dictionary<int, int> orderDemandByPotionId,
+            Dictionary<int, int> orderDemandByIngredientId)
+        {
+            var recipeByKey = new Dictionary<string, List<RecipeIngredient>>();
+            foreach (var potion in potions)
+            {
+                recipeByKey[$"P:{potion.Id}"] = potion.Recipe;
+            }
+            foreach (var kv in productRecipeByIngredientId)
+            {
+                if (ingredientsDict.TryGetValue(kv.Key, out var ing) && ing.Type.IsSellableAsProduct())
+                {
+                    recipeByKey[$"I:{kv.Key}"] = kv.Value;
+                }
+            }
+
+            var consumersOf = new Dictionary<string, List<(string ConsumerKey, int Ratio)>>();
+            foreach (var (nodeKey, recipe) in recipeByKey)
+            {
+                foreach (var r in recipe)
+                {
+                    if (r.Quantity <= 0) continue;
+                    string componentKey = r.PotionId.HasValue ? $"P:{r.PotionId.Value}" : $"I:{r.IngredientId}";
+                    if (!consumersOf.TryGetValue(componentKey, out var list))
+                    {
+                        list = new List<(string, int)>();
+                        consumersOf[componentKey] = list;
+                    }
+                    list.Add((nodeKey, r.Quantity));
+                }
+            }
+
+            int GetDirectDemand(string key)
+            {
+                int id = int.Parse(key.Substring(2));
+                return key[0] == 'P'
+                    ? orderDemandByPotionId.GetValueOrDefault(id)
+                    : orderDemandByIngredientId.GetValueOrDefault(id);
+            }
+
+            int GetOwned(string key)
+            {
+                int id = int.Parse(key.Substring(2));
+                return key[0] == 'P'
+                    ? stockByPotionId.GetValueOrDefault(id)
+                    : stockByIngredientId.GetValueOrDefault(id);
+            }
+
+            var cache = new Dictionary<string, int>();
+
+            int GetMissing(string key, HashSet<string> visiting)
+            {
+                if (cache.TryGetValue(key, out var cached)) return cached;
+                if (!visiting.Add(key)) return 0;
+
+                int induced = 0;
+                if (consumersOf.TryGetValue(key, out var consumers))
+                {
+                    foreach (var (consumerKey, ratio) in consumers)
+                    {
+                        induced += GetMissing(consumerKey, visiting) * ratio;
+                    }
+                }
+
+                int grossTarget = GetDirectDemand(key) + induced;
+                int result = Math.Max(0, grossTarget - GetOwned(key));
+                visiting.Remove(key);
+                cache[key] = result;
+                return result;
+            }
+
+            // Toutes les ressources stockables (pas seulement celles vendables comme produit) :
+            // sans ça, une ressource brute purement consommée par une recette (jamais commandée
+            // ni vendue elle-même) n'aurait jamais son manque calculé/mis en cache, alors que
+            // c'est justement ce qu'on veut afficher côté onglet Ressources.
+            var allKeys = new HashSet<string>(recipeByKey.Keys);
+            foreach (var id in orderDemandByPotionId.Keys) allKeys.Add($"P:{id}");
+            foreach (var id in orderDemandByIngredientId.Keys) allKeys.Add($"I:{id}");
+            foreach (var ing in ingredientsDict.Values.Where(i => i.Type.IsStockable())) allKeys.Add($"I:{ing.Id}");
+
+            foreach (var key in allKeys)
+            {
+                GetMissing(key, new HashSet<string>());
+            }
+
+            return cache;
+        }
+
+        // Coût de fabrication d'une unité à partir d'une recette (Potion.Recipe ou
+        // IngredientStock.ProductRecipe), ressources brutes ET produits/ressources-produits
+        // intermédiaires inclus : un composant hérite du coût de fabrication de SA PROPRE
+        // recette, calculé récursivement (ou de son Price s'il n'en a pas - ressource brute).
+        // "visiting" détecte les dépendances circulaires (préfixe P: pour un Potion, I: pour une
+        // ressource-produit, les deux espaces d'ID pouvant se recouvrir) : la branche en cycle
+        // est alors ignorée (coût 0 pour cette part) plutôt que de boucler indéfiniment.
+        private static float CalculateRecipeCost(
+            List<RecipeIngredient> recipe,
+            Dictionary<int, Ingredient> ingredientsDict,
+            Dictionary<int, Potion> potionsById,
+            Dictionary<int, List<RecipeIngredient>> productRecipeByIngredientId,
+            HashSet<string> visiting)
+        {
+            float cost = 0f;
+            foreach (var r in recipe)
+            {
+                if (r.Quantity <= 0) continue;
+
+                if (r.PotionId.HasValue)
+                {
+                    if (!potionsById.TryGetValue(r.PotionId.Value, out var subProduct)) continue;
+                    string key = $"P:{subProduct.Id}";
+                    if (visiting.Add(key))
+                    {
+                        cost += CalculateRecipeCost(subProduct.Recipe, ingredientsDict, potionsById, productRecipeByIngredientId, visiting) * r.Quantity;
+                        visiting.Remove(key);
+                    }
+                }
+                else if (ingredientsDict.TryGetValue(r.IngredientId, out var ing))
+                {
+                    if (productRecipeByIngredientId.TryGetValue(r.IngredientId, out var subRecipe) && subRecipe.Count > 0)
+                    {
+                        string key = $"I:{r.IngredientId}";
+                        if (visiting.Add(key))
+                        {
+                            cost += CalculateRecipeCost(subRecipe, ingredientsDict, potionsById, productRecipeByIngredientId, visiting) * r.Quantity;
+                            visiting.Remove(key);
+                        }
+                    }
+                    else if (ing.Price.HasValue)
+                    {
+                        cost += ing.Price.Value * r.Quantity;
+                    }
+                }
+            }
+
+            return cost;
         }
 
         private static int ComputeMaxCraftable(List<ResourceRequirement> requirements)
@@ -403,15 +630,43 @@ namespace SevenwandsCompanion
         private void RefreshCraftableCounts()
         {
             var stockByIngredientId = StockItems.ToDictionary(s => s.IngredientId, s => s.QuantityOwned);
+            var potionsById = _potions.ToDictionary(p => p.Id);
+            // Exclut les entrées "Ressource vendue comme Produit" (IngredientId renseigné) :
+            // elles partagent toutes le sentinel PotionId=0, un ToDictionary planterait sinon
+            // sur la clé dupliquée dès la 2e entrée.
+            var stockByPotionId = PotionProfits.Where(p => !p.IngredientId.HasValue).ToDictionary(p => p.PotionId, p => p.QuantityOwned);
+            var productRecipeByIngredientId = PotionProfits
+                .Where(p => p.IngredientId.HasValue)
+                .ToDictionary(p => p.IngredientId!.Value, p => p.ProductRecipe);
+
+            var (orderDemandByPotionId, orderDemandByIngredientId) = ComputePendingOrderDemand(_orders);
+            var missingProduction = ComputeMissingProduction(_potions, productRecipeByIngredientId, _ingredientsDict, stockByIngredientId, stockByPotionId, orderDemandByPotionId, orderDemandByIngredientId);
 
             foreach (var profit in PotionProfits)
             {
+                if (profit.IngredientId.HasValue)
+                {
+                    // Ressource vendue comme produit avec sa propre recette optionnelle (vide =
+                    // ressource brute, Fabricable reste illimité).
+                    int ownerMissing = missingProduction.TryGetValue($"I:{profit.IngredientId.Value}", out var t1) ? t1 : 0;
+                    var ingRequirements = BuildResourceRequirements(profit.ProductRecipe, _ingredientsDict, stockByIngredientId, potionsById, stockByPotionId, ownerMissing);
+                    profit.MaxCraftable = ComputeMaxCraftable(ingRequirements);
+                    profit.ResourceRequirements = ingRequirements;
+                    continue;
+                }
+
                 var potion = _potions.FirstOrDefault(p => p.Id == profit.PotionId);
                 if (potion == null) continue;
 
-                var requirements = BuildResourceRequirements(potion, _ingredientsDict, stockByIngredientId);
+                int potionMissing = missingProduction.TryGetValue($"P:{potion.Id}", out var t2) ? t2 : 0;
+                var requirements = BuildResourceRequirements(potion.Recipe, _ingredientsDict, stockByIngredientId, potionsById, stockByPotionId, potionMissing);
                 profit.MaxCraftable = ComputeMaxCraftable(requirements);
                 profit.ResourceRequirements = requirements;
+            }
+
+            foreach (var stockItem in StockItems)
+            {
+                stockItem.TotalShortfall = missingProduction.TryGetValue($"I:{stockItem.IngredientId}", out var s) ? s : 0;
             }
         }
 
@@ -424,15 +679,24 @@ namespace SevenwandsCompanion
         private void RecomputePotionProfits(BusinessData? businessData)
         {
             Dictionary<int, PotionResalePrice> resaleDataByPotionId;
+            Dictionary<int, IngredientStock> productResaleDataByIngredientId;
             if (businessData != null)
             {
                 resaleDataByPotionId = businessData.PotionResalePrices.ToDictionary(p => p.PotionId);
+                productResaleDataByIngredientId = businessData.IngredientStocks.ToDictionary(s => s.IngredientId);
             }
             else
             {
-                resaleDataByPotionId = PotionProfits.ToDictionary(
-                    p => p.PotionId,
-                    p => new PotionResalePrice(p.PotionId, p.ResalePrice, PersistedCategoryId(p.SelectedCategory), p.QuantityOwned));
+                resaleDataByPotionId = PotionProfits
+                    .Where(p => !p.IngredientId.HasValue)
+                    .ToDictionary(
+                        p => p.PotionId,
+                        p => new PotionResalePrice(p.PotionId, p.ResalePrice, PersistedCategoryId(p.SelectedCategory), p.QuantityOwned));
+                productResaleDataByIngredientId = PotionProfits
+                    .Where(p => p.IngredientId.HasValue)
+                    .ToDictionary(
+                        p => p.IngredientId!.Value,
+                        p => new IngredientStock(p.IngredientId!.Value, p.QuantityOwned) { ResalePrice = p.ResalePrice, ProductRecipe = p.ProductRecipe });
             }
 
             foreach (var item in PotionProfits)
@@ -443,6 +707,13 @@ namespace SevenwandsCompanion
             }
 
             var stockByIngredientId = StockItems.ToDictionary(s => s.IngredientId, s => s.QuantityOwned);
+            var potionsById = _potions.ToDictionary(p => p.Id);
+            var stockByPotionId = resaleDataByPotionId.ToDictionary(kv => kv.Key, kv => kv.Value.QuantityOwned);
+            var productRecipeByIngredientId = productResaleDataByIngredientId.ToDictionary(kv => kv.Key, kv => kv.Value.ProductRecipe);
+            // businessData.Orders (pas encore _orders : ce champ n'est assigné qu'après cet appel
+            // lors du chargement initial) fait foi quand fourni, sinon _orders déjà en mémoire.
+            var (orderDemandByPotionId, orderDemandByIngredientId) = ComputePendingOrderDemand(businessData?.Orders ?? _orders);
+            var missingProduction = ComputeMissingProduction(_potions, productRecipeByIngredientId, _ingredientsDict, stockByIngredientId, stockByPotionId, orderDemandByPotionId, orderDemandByIngredientId);
 
             // Catégorie "Potion" par défaut si elle existe encore (aide au premier remplissage,
             // puisqu'à ce jour tous les produits gérés sont des potions)
@@ -453,9 +724,10 @@ namespace SevenwandsCompanion
 
             foreach (var potion in _potions)
             {
-                float unitCost = SevenwandsTools.CalculatePotionUnitCost(potion, _ingredientsDict);
+                float unitCost = CalculateRecipeCost(potion.Recipe, _ingredientsDict, potionsById, productRecipeByIngredientId, new HashSet<string> { $"P:{potion.Id}" });
 
-                var requirements = BuildResourceRequirements(potion, _ingredientsDict, stockByIngredientId);
+                int potionMissing = missingProduction.TryGetValue($"P:{potion.Id}", out var t) ? t : 0;
+                var requirements = BuildResourceRequirements(potion.Recipe, _ingredientsDict, stockByIngredientId, potionsById, stockByPotionId, potionMissing);
                 int maxCraftable = ComputeMaxCraftable(requirements);
 
                 bool hasExistingEntry = resaleDataByPotionId.TryGetValue(potion.Id, out var existingResale);
@@ -479,6 +751,51 @@ namespace SevenwandsCompanion
                 newProfits.Add(vm);
             }
 
+            // Ressources vendables directement comme produit (Type resourceAndProduct/
+            // ingredientAndResourceAndProduct) : Possédé partagé avec l'instance
+            // StockItemViewModel de l'onglet Ressources via LinkedStock (une seule quantité
+            // réelle, jamais dupliquée). ProductRecipe (optionnelle, éditée depuis l'écran
+            // Ressource) définit ce dont cette ressource-produit a besoin pour être "fabriquée" :
+            // vide = ressource brute (coût = son propre Price, Fabricable illimité), sinon coût
+            // et Fabricable sont calculés exactement comme pour un Potion.
+            foreach (var ingredient in _ingredientsDict.Values.Where(i => i.Type.IsSellableAsProduct()))
+            {
+                var linkedStock = StockItems.FirstOrDefault(s => s.IngredientId == ingredient.Id);
+                if (linkedStock == null) continue;
+
+                bool hasExistingEntry = productResaleDataByIngredientId.TryGetValue(ingredient.Id, out var existingProductResale);
+                var productRecipe = hasExistingEntry ? existingProductResale!.ProductRecipe : new List<RecipeIngredient>();
+
+                float unitCost = productRecipe.Count > 0
+                    ? CalculateRecipeCost(productRecipe, _ingredientsDict, potionsById, productRecipeByIngredientId, new HashSet<string> { $"I:{ingredient.Id}" })
+                    : (ingredient.Price ?? 0);
+
+                int ingredientMissing = missingProduction.TryGetValue($"I:{ingredient.Id}", out var it) ? it : 0;
+                var requirements = BuildResourceRequirements(productRecipe, _ingredientsDict, stockByIngredientId, potionsById, stockByPotionId, ingredientMissing);
+                int maxCraftable = ComputeMaxCraftable(requirements);
+
+                var vm = new PotionProfitViewModel
+                {
+                    IngredientId = ingredient.Id,
+                    LinkedStock = linkedStock,
+                    ProductRecipe = productRecipe,
+                    Name = ingredient.Name ?? "",
+                    UnitCost = unitCost,
+                    MaxCraftable = maxCraftable,
+                    ResourceRequirements = requirements,
+                    AvailableCategories = CategoryPickerOptions,
+                    ResalePrice = hasExistingEntry ? existingProductResale!.ResalePrice : 0
+                    // Pas de SelectedCategory ici : le regroupement côté Produits utilise
+                    // EffectiveCategoryIds, qui reprend directement les catégories de la
+                    // ressource (LinkedStock) - une seule catégorisation à faire, côté Ressources.
+                };
+                vm.CategoryChanged += OnProductItemChanged;
+                vm.QuantityChanged += OnProductItemChanged;
+                vm.ResalePriceChanged += OnProductItemChanged;
+
+                newProfits.Add(vm);
+            }
+
             // La meilleure marge en tête de liste (indépendant du tri d'affichage choisi)
             var byMargin = newProfits.OrderByDescending(p => p.MarginPerUnit).ToList();
             if (byMargin.Count > 0 && byMargin[0].MarginPerUnit > 0)
@@ -488,6 +805,11 @@ namespace SevenwandsCompanion
 
             PotionProfits.Clear();
             foreach (var p in newProfits) PotionProfits.Add(p);
+
+            foreach (var stockItem in StockItems)
+            {
+                stockItem.TotalShortfall = missingProduction.TryGetValue($"I:{stockItem.IngredientId}", out var s) ? s : 0;
+            }
         }
 
         /// <summary>
@@ -523,7 +845,7 @@ namespace SevenwandsCompanion
             }
 
             IEnumerable<PotionProfitViewModel> products = PotionProfits
-                .Where(p => filterId == null || p.SelectedCategory?.Id == filterId)
+                .Where(p => filterId == null || p.EffectiveCategoryIds.Contains(filterId.Value))
                 .Where(p => string.IsNullOrEmpty(search) || p.Name.Contains(search, StringComparison.OrdinalIgnoreCase));
             if (SelectedProductSort != null) products = SelectedProductSort.Apply(products);
             var productsList = products.ToList();
@@ -531,7 +853,7 @@ namespace SevenwandsCompanion
             ProductGroups.Clear();
             foreach (var category in Categories.OrderBy(c => c.Name))
             {
-                var itemsInCategory = productsList.Where(p => p.SelectedCategory?.Id == category.Id).ToList();
+                var itemsInCategory = productsList.Where(p => p.EffectiveCategoryIds.Contains(category.Id)).ToList();
                 if (itemsInCategory.Any())
                 {
                     ProductGroups.Add(new ProductCategoryGroupViewModel(
@@ -539,7 +861,7 @@ namespace SevenwandsCompanion
                 }
             }
             var uncategorizedProducts = productsList
-                .Where(p => p.SelectedCategory == null || p.SelectedCategory.Id == UncategorizedCategoryId)
+                .Where(p => !p.EffectiveCategoryIds.Any())
                 .ToList();
             if (uncategorizedProducts.Any())
             {
@@ -712,7 +1034,6 @@ namespace SevenwandsCompanion
             // seules les commandes déjà terminées sont supprimées, les commandes en cours
             // restent intactes.
             _orders.RemoveAll(o => o.IsCompleted);
-            _pendingOrdersCount = _orders.Count(o => !o.IsCompleted);
             OnPropertyChanged(nameof(OrdersButtonText));
 
             _pendingUpdateCts?.Cancel();
@@ -721,13 +1042,30 @@ namespace SevenwandsCompanion
 
         private BusinessData BuildBusinessData()
         {
+            // Prix de revente / catégorie "produit" des ressources vendables directement : portés
+            // par PotionProfitViewModel mais persistés sur l'IngredientStock correspondant (la
+            // quantité, elle, vient déjà de StockItems ci-dessous - un seul compteur, jamais dupliqué).
+            var productResaleByIngredientId = PotionProfits
+                .Where(p => p.IngredientId.HasValue)
+                .ToDictionary(p => p.IngredientId!.Value);
+
             return new BusinessData
             {
                 Categories = Categories.ToList(),
                 IngredientStocks = StockItems
-                    .Select(s => new IngredientStock(s.IngredientId, s.QuantityOwned, s.SelectedCategoryIds))
+                    .Select(s =>
+                    {
+                        var stock = new IngredientStock(s.IngredientId, s.QuantityOwned, s.SelectedCategoryIds);
+                        if (productResaleByIngredientId.TryGetValue(s.IngredientId, out var productVm))
+                        {
+                            stock.ResalePrice = productVm.ResalePrice;
+                            stock.ProductRecipe = productVm.ProductRecipe;
+                        }
+                        return stock;
+                    })
                     .ToList(),
                 PotionResalePrices = PotionProfits
+                    .Where(p => !p.IngredientId.HasValue)
                     .Select(p => new PotionResalePrice(p.PotionId, p.ResalePrice, PersistedCategoryId(p.SelectedCategory), p.QuantityOwned))
                     .ToList(),
                 Orders = _orders,
@@ -934,12 +1272,76 @@ namespace SevenwandsCompanion
         }
 
         public event EventHandler? QuantityChanged;
+
+        // Manque agrégé sur toute la chaîne de production (commandes en cours + tout ce qui
+        // consomme cette ressource, récursivement) - voir ComputeMissingProduction. 0 si cette
+        // ressource n'est demandée par rien actuellement : rien ne s'affiche dans ce cas.
+        private int _totalShortfall;
+        public int TotalShortfall
+        {
+            get => _totalShortfall;
+            set
+            {
+                if (_totalShortfall != value)
+                {
+                    _totalShortfall = value;
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(ShortfallDisplay));
+                    OnPropertyChanged(nameof(HasShortfall));
+                }
+            }
+        }
+
+        public bool HasShortfall => TotalShortfall > 0;
+        public string ShortfallDisplay => $"⚠ Manque: {GallyonsFormat.Format0(TotalShortfall)}";
     }
 
-    // ViewModel pour une ligne de rentabilité de produit fini (potion, ou autre type de produit à terme)
+    // ViewModel pour une ligne de rentabilité de produit fini (potion, ou une Ressource marquée
+    // vendable directement comme produit - Type resourceAndProduct/ingredientAndResourceAndProduct).
     public class PotionProfitViewModel : BindableObject
     {
         public int PotionId { get; set; }
+
+        // Non-null quand cette ligne représente une Ressource vendue directement comme Produit
+        // plutôt qu'un Potion avec recette (PotionId vaut alors 0, inutilisé).
+        public int? IngredientId { get; set; }
+
+        // Recette optionnelle de cette ressource-produit (composants nécessaires pour la
+        // "fabriquer" - vide pour une ressource brute), éditée depuis ResourceEditorPage et
+        // simplement reportée telle quelle ici pour piloter ResourcesSummary/MaxCraftable/coût.
+        public List<RecipeIngredient> ProductRecipe { get; set; } = new();
+
+        // Catégorie(s) utilisées pour le regroupement par catégorie côté Produits. Un Potion a
+        // une seule catégorie (SelectedCategory) ; une ressource-produit reprend directement les
+        // catégories DE LA RESSOURCE (LinkedStock.SelectedCategoryIds, multi) - pas de
+        // catégorisation séparée à refaire côté Produits pour le même élément physique.
+        public List<int> EffectiveCategoryIds => LinkedStock != null
+            ? LinkedStock.SelectedCategoryIds
+            : (SelectedCategory != null && SelectedCategory.Id != -1 ? new List<int> { SelectedCategory.Id } : new List<int>());
+
+        // Quand IngredientId est renseigné, pointe vers LA MÊME instance que celle affichée dans
+        // l'onglet Ressources : Possédé n'est alors pas un compteur indépendant mais un miroir de
+        // ce stock unique (une seule quantité réelle, jamais dupliquée/désynchronisée).
+        private StockItemViewModel? _linkedStock;
+        public StockItemViewModel? LinkedStock
+        {
+            get => _linkedStock;
+            set
+            {
+                if (_linkedStock != null) _linkedStock.QuantityChanged -= OnLinkedStockQuantityChanged;
+                _linkedStock = value;
+                if (_linkedStock != null) _linkedStock.QuantityChanged += OnLinkedStockQuantityChanged;
+            }
+        }
+
+        private void OnLinkedStockQuantityChanged(object? sender, EventArgs e)
+        {
+            OnPropertyChanged(nameof(QuantityOwned));
+            OnPropertyChanged(nameof(TotalPotentialMargin));
+            OnPropertyChanged(nameof(MarginSummary));
+            QuantityChanged?.Invoke(this, EventArgs.Empty);
+        }
+
         public string Name { get; set; } = "";
         public float UnitCost { get; set; }
 
@@ -961,34 +1363,53 @@ namespace SevenwandsCompanion
                 _resourceRequirements = value;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(ResourcesSummary));
+                OnPropertyChanged(nameof(TotalShortfall));
             }
         }
+
+        // Somme des manques agrégés (voir ResourceRequirement.AggregateShortfall) de tous les
+        // composants de la recette - sert à trier les produits par urgence de besoin en
+        // ressources, tous composants confondus.
+        public int TotalShortfall => ResourceRequirements.Sum(r => r.AggregateShortfall);
 
         public FormattedString ResourcesSummary
         {
             get
             {
                 var formatted = new FormattedString();
+
+                string craftableText = MaxCraftable < 0 ? "∞" : MaxCraftable.ToString();
+
                 if (ResourceRequirements.Count == 0)
                 {
                     formatted.Spans.Add(new Span { Text = "Aucune ressource requise", TextColor = Colors.Gray });
-                    return formatted;
                 }
-
-                for (int i = 0; i < ResourceRequirements.Count; i++)
+                else
                 {
-                    var r = ResourceRequirements[i];
-                    formatted.Spans.Add(new Span
+                    for (int i = 0; i < ResourceRequirements.Count; i++)
                     {
-                        Text = $"{r.Name}: {r.Owned}",
-                        TextColor = r.Owned >= r.NeededPerUnit ? Colors.LightGreen : Colors.IndianRed,
-                        FontAttributes = FontAttributes.Bold
-                    });
-                    if (i < ResourceRequirements.Count - 1)
-                    {
-                        formatted.Spans.Add(new Span { Text = " | ", TextColor = Colors.Gray });
+                        var r = ResourceRequirements[i];
+                        string shortfallSuffix = r.AggregateShortfall > 0 ? $" (manque: {r.AggregateShortfall})" : "";
+                        formatted.Spans.Add(new Span
+                        {
+                            Text = $"{r.Name}: {r.Owned}/{r.NeededPerUnit}{shortfallSuffix}",
+                            TextColor = r.Owned >= r.NeededPerUnit ? Colors.LightGreen : Colors.IndianRed,
+                            FontAttributes = FontAttributes.Bold
+                        });
+                        if (i < ResourceRequirements.Count - 1)
+                        {
+                            formatted.Spans.Add(new Span { Text = " | ", TextColor = Colors.Gray });
+                        }
                     }
                 }
+
+                formatted.Spans.Add(new Span { Text = "  •  ", TextColor = Colors.Gray });
+                formatted.Spans.Add(new Span
+                {
+                    Text = $"Fabricable: {craftableText}",
+                    TextColor = (Color)Application.Current!.Resources["AccentGold"],
+                    FontAttributes = FontAttributes.Bold
+                });
 
                 return formatted;
             }
@@ -1047,13 +1468,21 @@ namespace SevenwandsCompanion
         public bool IsBestMargin { get; set; }
 
         // Quantité de produits finis déjà fabriqués, possédés en stock (indépendante du
-        // nombre "Fabricables" calculé à partir des ressources restantes).
+        // nombre "Fabricables" calculé à partir des ressources restantes). Si LinkedStock est
+        // renseigné (Ressource vendue directement comme Produit), délègue entièrement à ce stock
+        // partagé au lieu d'un compteur séparé.
         private int _quantityOwned;
         public int QuantityOwned
         {
-            get => _quantityOwned;
+            get => LinkedStock != null ? LinkedStock.QuantityOwned : _quantityOwned;
             set
             {
+                if (LinkedStock != null)
+                {
+                    LinkedStock.QuantityOwned = value;
+                    return;
+                }
+
                 if (_quantityOwned != value)
                 {
                     _quantityOwned = value;
@@ -1076,6 +1505,11 @@ namespace SevenwandsCompanion
         public string Name { get; set; } = "";
         public int Owned { get; set; }
         public int NeededPerUnit { get; set; }
+
+        // Manque agrégé sur toute la chaîne de production (pas juste pour 1 unité) : 0 si ce
+        // composant est déjà suffisant pour la cible de production calculée sur l'ensemble du
+        // catalogue - dans ce cas, rien ne s'affiche.
+        public int AggregateShortfall { get; set; }
     }
 
     // Formatage commun des montants en Gallyons avec séparateur de milliers (espace), utilisé

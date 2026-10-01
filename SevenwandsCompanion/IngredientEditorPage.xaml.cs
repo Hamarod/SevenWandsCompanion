@@ -395,14 +395,41 @@ namespace SevenwandsCompanion
             }
         }
 
+        // Price reste float? (utilisé pour la sauvegarde), mais l'Entry se lie à PriceText
+        // (string) : un binding direct Entry.Text <-> float? ne sait pas représenter "vide" (une
+        // chaîne vide ne convertit pas vers null), donc MAUI annule la saisie et réaffiche
+        // l'ancienne valeur dès qu'on efface le champ. PriceText gère "vide" explicitement.
         private float? _price;
         public float? Price
         {
             get => _price;
             set
             {
-                _price = value;
-                OnPropertyChanged();
+                if (_price != value)
+                {
+                    _price = value;
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(PriceText));
+                }
+            }
+        }
+
+        public string PriceText
+        {
+            get => _price?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "";
+            set
+            {
+                if (string.IsNullOrWhiteSpace(value))
+                {
+                    Price = null;
+                }
+                else if (float.TryParse(value, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.CurrentCulture, out var parsed)
+                    || float.TryParse(value, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out parsed))
+                {
+                    Price = parsed;
+                }
+                // Saisie partielle/invalide (ex: "-", "1.") : on n'écrase pas Price, l'utilisateur
+                // continue de taper.
             }
         }
 

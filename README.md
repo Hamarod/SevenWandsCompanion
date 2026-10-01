@@ -28,7 +28,7 @@ Au premier lancement, sélectionnez votre maison préférée. L''application s''
 
 ### 📊 **Suivi des Jetons**
 Suivez votre progression académique année par année :
-- ✅ 5 années complètes de cours
+- ✅ 7 années complètes de cours
 - 🎯 7 matières par année (Alchimie, Sorts, Potions, Histoire, Créatures, Club, Divers)
 - 📈 Statistiques en temps réel
 - 💾 Sauvegarde automatique

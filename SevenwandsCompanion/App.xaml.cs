@@ -73,6 +73,10 @@ namespace SevenwandsCompanion
                         System.Diagnostics.Debug.WriteLine($"📊 Navigating to {startRoute} with house: {currentHouse}");
                         await shell.GoToAsync(startRoute);
                     }
+
+                    // Vérifie s'il existe une version plus récente sur GitHub (et rapporte un
+                    // éventuel échec de la tentative de mise à jour précédente).
+                    await UpdateService.CheckAtStartupAsync(shell);
                 });
             });
 

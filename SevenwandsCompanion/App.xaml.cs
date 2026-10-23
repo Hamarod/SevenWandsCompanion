@@ -65,9 +65,13 @@ namespace SevenwandsCompanion
                     }
                     else
                     {
-                        // Maison déjà sélectionnée, aller au suivi des jetons
-                        System.Diagnostics.Debug.WriteLine($"📊 Navigating to TokenTracking with house: {currentHouse}");
-                        await shell.GoToAsync("//TokenTracking");
+                        // Maison déjà sélectionnée : suivi des jetons, sauf si la scolarité est
+                        // terminée - on va alors directement sur Business, sans passer par
+                        // l'écran des jetons (qui redirigeait après coup, d'où un bref flash).
+                        bool scolariteFinished = await AppShell.IsScolariteFinishedAsync();
+                        string startRoute = scolariteFinished ? "//Business" : "//TokenTracking";
+                        System.Diagnostics.Debug.WriteLine($"📊 Navigating to {startRoute} with house: {currentHouse}");
+                        await shell.GoToAsync(startRoute);
                     }
                 });
             });

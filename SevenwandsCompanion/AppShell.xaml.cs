@@ -33,7 +33,7 @@ namespace SevenwandsCompanion
             }
         }
 
-        private static async Task<bool> IsScolariteFinishedAsync()
+        internal static async Task<bool> IsScolariteFinishedAsync()
         {
             try
             {

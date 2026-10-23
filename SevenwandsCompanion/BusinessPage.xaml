@@ -107,7 +107,64 @@
                                         </Grid.GestureRecognizers>
                                     </Grid>
 
-                                    <VerticalStackLayout IsVisible="{Binding IsExpanded}"
+                                    <!-- Accordéon "commande" : ressources à obtenir pour cette commande seule -->
+                                    <VerticalStackLayout IsVisible="{Binding ShowOrderEntries}"
+                                                         BindableLayout.ItemsSource="{Binding OrderEntries}">
+                                        <BindableLayout.ItemTemplate>
+                                            <DataTemplate>
+                                                <Grid Padding="12,10" ColumnDefinitions="*, Auto, Auto" ColumnSpacing="10">
+                                                    <VerticalStackLayout Grid.Column="0" Spacing="2" VerticalOptions="Center">
+                                                        <Label Text="{Binding Item.Name}"
+                                                               TextColor="{StaticResource TextPrimary}"
+                                                               FontSize="14"
+                                                               FontAttributes="Bold"/>
+                                                        <Label Text="{Binding ShortfallDisplay}"
+                                                               TextColor="IndianRed"
+                                                               FontSize="12"
+                                                               FontAttributes="Bold"/>
+                                                    </VerticalStackLayout>
+
+                                                    <Label Grid.Column="1"
+                                                           Text="Possédé:"
+                                                           TextColor="{StaticResource TextSecondary}"
+                                                           FontSize="12"
+                                                           VerticalOptions="Center"/>
+
+                                                    <HorizontalStackLayout Grid.Column="2" Spacing="4" VerticalOptions="Center">
+                                                        <Button Text="−"
+                                                                FontSize="14"
+                                                                FontAttributes="Bold"
+                                                                WidthRequest="32"
+                                                                HeightRequest="32"
+                                                                Padding="0"
+                                                                BackgroundColor="{StaticResource ButtonBackground}"
+                                                                TextColor="White"
+                                                                CornerRadius="6"
+                                                                CommandParameter="{Binding Item}"
+                                                                Clicked="OnDecrementStockClicked"/>
+                                                        <Entry Text="{Binding Item.QuantityOwned}"
+                                                               Keyboard="Numeric"
+                                                               WidthRequest="55"
+                                                               HorizontalTextAlignment="Center"
+                                                               Style="{StaticResource EntryStyle}"/>
+                                                        <Button Text="+"
+                                                                FontSize="14"
+                                                                FontAttributes="Bold"
+                                                                WidthRequest="32"
+                                                                HeightRequest="32"
+                                                                Padding="0"
+                                                                BackgroundColor="{StaticResource ButtonBackground}"
+                                                                TextColor="White"
+                                                                CornerRadius="6"
+                                                                CommandParameter="{Binding Item}"
+                                                                Clicked="OnIncrementStockClicked"/>
+                                                    </HorizontalStackLayout>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </BindableLayout.ItemTemplate>
+                                    </VerticalStackLayout>
+
+                                    <VerticalStackLayout IsVisible="{Binding ShowItems}"
                                                          BindableLayout.ItemsSource="{Binding Items}">
                                         <BindableLayout.ItemTemplate>
                                             <DataTemplate>
@@ -242,7 +299,64 @@
                                         </Grid.GestureRecognizers>
                                     </Grid>
 
-                                    <VerticalStackLayout IsVisible="{Binding IsExpanded}"
+                                    <!-- Accordéon "commande" : produits à fabriquer pour cette commande seule -->
+                                    <VerticalStackLayout IsVisible="{Binding ShowOrderEntries}"
+                                                         BindableLayout.ItemsSource="{Binding OrderEntries}">
+                                        <BindableLayout.ItemTemplate>
+                                            <DataTemplate>
+                                                <Grid Padding="12,10" ColumnDefinitions="*, Auto, Auto" ColumnSpacing="10">
+                                                    <VerticalStackLayout Grid.Column="0" Spacing="2" VerticalOptions="Center">
+                                                        <Label Text="{Binding Item.Name}"
+                                                               TextColor="{StaticResource TextPrimary}"
+                                                               FontSize="14"
+                                                               FontAttributes="Bold"/>
+                                                        <Label Text="{Binding ShortfallDisplay}"
+                                                               TextColor="IndianRed"
+                                                               FontSize="12"
+                                                               FontAttributes="Bold"/>
+                                                    </VerticalStackLayout>
+
+                                                    <Label Grid.Column="1"
+                                                           Text="Possédé:"
+                                                           TextColor="{StaticResource TextSecondary}"
+                                                           FontSize="12"
+                                                           VerticalOptions="Center"/>
+
+                                                    <HorizontalStackLayout Grid.Column="2" Spacing="4" VerticalOptions="Center">
+                                                        <Button Text="−"
+                                                                FontSize="14"
+                                                                FontAttributes="Bold"
+                                                                WidthRequest="32"
+                                                                HeightRequest="32"
+                                                                Padding="0"
+                                                                BackgroundColor="{StaticResource ButtonBackground}"
+                                                                TextColor="White"
+                                                                CornerRadius="6"
+                                                                CommandParameter="{Binding Item}"
+                                                                Clicked="OnDecrementProductClicked"/>
+                                                        <Entry Text="{Binding Item.QuantityOwned}"
+                                                               Keyboard="Numeric"
+                                                               WidthRequest="55"
+                                                               HorizontalTextAlignment="Center"
+                                                               Style="{StaticResource EntryStyle}"/>
+                                                        <Button Text="+"
+                                                                FontSize="14"
+                                                                FontAttributes="Bold"
+                                                                WidthRequest="32"
+                                                                HeightRequest="32"
+                                                                Padding="0"
+                                                                BackgroundColor="{StaticResource ButtonBackground}"
+                                                                TextColor="White"
+                                                                CornerRadius="6"
+                                                                CommandParameter="{Binding Item}"
+                                                                Clicked="OnIncrementProductClicked"/>
+                                                    </HorizontalStackLayout>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </BindableLayout.ItemTemplate>
+                                    </VerticalStackLayout>
+
+                                    <VerticalStackLayout IsVisible="{Binding ShowItems}"
                                                          BindableLayout.ItemsSource="{Binding Items}">
                                         <BindableLayout.ItemTemplate>
                                             <DataTemplate>

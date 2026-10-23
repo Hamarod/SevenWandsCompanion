@@ -28,16 +28,35 @@ namespace SevenwandsCompanion
         private float _treasury;
         public string TreasuryDisplay => $"🪙 Cagnotte: {GallyonsFormat.Format0(_treasury)} Gallyons";
 
-        // "N" (aucune commande terminée) ou "N/M" (N en cours, M terminées) : le "/M" est omis
-        // quand M vaut 0 pour ne pas afficher "0" inutilement.
+        // "N" (aucune commande terminable) ou "N/M" (N en cours, dont M terminables avec le stock
+        // actuel) : le "/M" est omis quand M vaut 0. Terminable = tous les produits/ressources
+        // demandés sont possédés en quantité suffisante (même règle que le bouton de
+        // OrdersManagerPage).
         public string OrdersButtonText
         {
             get
             {
-                int pending = _orders.Count(o => !o.IsCompleted);
-                int completed = _orders.Count(o => o.IsCompleted);
-                return completed > 0 ? $"📋 Commandes ({pending}/{completed})" : $"📋 Commandes ({pending})";
+                var pendingOrders = _orders.Where(o => !o.IsCompleted).ToList();
+                int completable = pendingOrders.Count(CanCompleteOrder);
+                return completable > 0
+                    ? $"📋 Commandes ({pendingOrders.Count}/{completable})"
+                    : $"📋 Commandes ({pendingOrders.Count})";
             }
+        }
+
+        private bool CanCompleteOrder(Order order)
+        {
+            foreach (var item in order.Items)
+            {
+                int owned = PotionProfits.FirstOrDefault(p => !p.IngredientId.HasValue && p.PotionId == item.PotionId)?.QuantityOwned ?? 0;
+                if (owned < item.Quantity) return false;
+            }
+            foreach (var resourceItem in order.ResourceItems)
+            {
+                int owned = StockItems.FirstOrDefault(s => s.IngredientId == resourceItem.IngredientId)?.QuantityOwned ?? 0;
+                if (owned < resourceItem.Quantity) return false;
+            }
+            return true;
         }
 
         // Catégories réellement persistées (créées/supprimées par l'utilisateur),
@@ -135,8 +154,10 @@ namespace SevenwandsCompanion
             StockSortOptions.Add(new SortOption<StockItemViewModel>("Quantité possédée (décroissant)", items => items.OrderByDescending(i => i.QuantityOwned)));
             StockSortOptions.Add(new SortOption<StockItemViewModel>("Prix unitaire (croissant)", items => items.OrderBy(i => i.UnitPrice ?? 0)));
             StockSortOptions.Add(new SortOption<StockItemViewModel>("Prix unitaire (décroissant)", items => items.OrderByDescending(i => i.UnitPrice ?? 0)));
+            StockSortOptions.Add(new SortOption<StockItemViewModel>("Besoin / manque (croissant)", items => items.OrderBy(i => i.TotalShortfall).ThenBy(i => i.Name)));
+            StockSortOptions.Add(new SortOption<StockItemViewModel>("Besoin / manque (décroissant)", items => items.OrderByDescending(i => i.TotalShortfall).ThenBy(i => i.Name)));
             StockSortOptions.Add(new SortOption<StockItemViewModel>("Catégorie", items => items.OrderBy(i => i.CategoriesDisplay)));
-            _selectedStockSort = StockSortOptions[0];
+            _selectedStockSort = StockSortOptions.First(o => o.Label == "Besoin / manque (décroissant)");
 
             ProductSortOptions.Add(new SortOption<PotionProfitViewModel>("Nom (A→Z)", items => items.OrderBy(i => i.Name)));
             ProductSortOptions.Add(new SortOption<PotionProfitViewModel>("Quantité possédée (croissant)", items => items.OrderBy(i => i.QuantityOwned)));
@@ -147,10 +168,10 @@ namespace SevenwandsCompanion
             ProductSortOptions.Add(new SortOption<PotionProfitViewModel>("Coût (décroissant)", items => items.OrderByDescending(i => i.UnitCost)));
             ProductSortOptions.Add(new SortOption<PotionProfitViewModel>("Fabricables (croissant)", items => items.OrderBy(i => i.MaxCraftable)));
             ProductSortOptions.Add(new SortOption<PotionProfitViewModel>("Fabricables (décroissant)", items => items.OrderByDescending(i => i.MaxCraftable)));
-            ProductSortOptions.Add(new SortOption<PotionProfitViewModel>("Besoin (croissant)", items => items.OrderBy(i => i.TotalShortfall)));
-            ProductSortOptions.Add(new SortOption<PotionProfitViewModel>("Besoin (décroissant)", items => items.OrderByDescending(i => i.TotalShortfall)));
+            ProductSortOptions.Add(new SortOption<PotionProfitViewModel>("Besoin / manque (croissant)", items => items.OrderBy(i => i.TotalShortfall).ThenBy(i => i.Name)));
+            ProductSortOptions.Add(new SortOption<PotionProfitViewModel>("Besoin / manque (décroissant)", items => items.OrderByDescending(i => i.TotalShortfall).ThenBy(i => i.Name)));
             ProductSortOptions.Add(new SortOption<PotionProfitViewModel>("Catégorie", items => items.OrderBy(i => i.SelectedCategory?.Name ?? "")));
-            _selectedProductSort = ProductSortOptions.First(o => o.Label == "Quantité possédée (décroissant)");
+            _selectedProductSort = ProductSortOptions.First(o => o.Label == "Besoin / manque (décroissant)");
 
             BindingContext = this;
         }
@@ -193,12 +214,14 @@ namespace SevenwandsCompanion
                 _selectedFilter = FilterOptions.FirstOrDefault();
                 OnPropertyChanged(nameof(SelectedFilter));
 
+                // _orders doit être assigné avant ApplyFilters : les accordéons "commande" en
+                // dépendent dès le premier affichage.
+                _orders = businessData.Orders;
+                _treasury = businessData.Treasury;
+
                 BuildStockItems(businessData);
                 RecomputePotionProfits(businessData);
                 ApplyFilters();
-
-                _orders = businessData.Orders;
-                _treasury = businessData.Treasury;
                 OnPropertyChanged(nameof(TreasuryDisplay));
                 OnPropertyChanged(nameof(OrdersButtonText));
 
@@ -668,6 +691,9 @@ namespace SevenwandsCompanion
             {
                 stockItem.TotalShortfall = missingProduction.TryGetValue($"I:{stockItem.IngredientId}", out var s) ? s : 0;
             }
+
+            // Le nombre de commandes terminables dépend du stock : mise à jour en direct.
+            OnPropertyChanged(nameof(OrdersButtonText));
         }
 
         /// <summary>
@@ -827,7 +853,25 @@ namespace SevenwandsCompanion
             if (SelectedStockSort != null) stock = SelectedStockSort.Apply(stock);
             var stockList = stock.ToList();
 
+            // Manque propre à chaque commande en cours (calculé comme si elle était seule), pour
+            // les accordéons "commande" affichés au-dessus des catégories.
+            var perOrderMissing = ComputePerOrderMissing();
+
             StockGroups.Clear();
+            foreach (var (order, missing) in perOrderMissing)
+            {
+                var entries = stockList
+                    .Select(i => new OrderStockEntryViewModel(i, missing.GetValueOrDefault($"I:{i.IngredientId}")))
+                    .Where(e => e.Shortfall > 0)
+                    .OrderByDescending(e => e.Shortfall)
+                    .ToList();
+                if (entries.Any())
+                {
+                    string name = OrderGroupName(order);
+                    StockGroups.Add(new StockCategoryGroupViewModel(
+                        name, entries, GetExpanded(_stockGroupExpanded, name, defaultExpanded: false), isOrderGroup: true));
+                }
+            }
             foreach (var category in Categories.OrderBy(c => c.Name))
             {
                 var itemsInCategory = stockList.Where(i => i.SelectedCategoryIds.Contains(category.Id)).ToList();
@@ -851,6 +895,22 @@ namespace SevenwandsCompanion
             var productsList = products.ToList();
 
             ProductGroups.Clear();
+            foreach (var (order, missing) in perOrderMissing)
+            {
+                var entries = productsList
+                    .Select(p => new OrderProductEntryViewModel(
+                        p,
+                        missing.GetValueOrDefault(p.IngredientId.HasValue ? $"I:{p.IngredientId.Value}" : $"P:{p.PotionId}")))
+                    .Where(e => e.Shortfall > 0)
+                    .OrderByDescending(e => e.Shortfall)
+                    .ToList();
+                if (entries.Any())
+                {
+                    string name = OrderGroupName(order);
+                    ProductGroups.Add(new ProductCategoryGroupViewModel(
+                        name, entries, GetExpanded(_productGroupExpanded, name, defaultExpanded: false), isOrderGroup: true));
+                }
+            }
             foreach (var category in Categories.OrderBy(c => c.Name))
             {
                 var itemsInCategory = productsList.Where(p => p.EffectiveCategoryIds.Contains(category.Id)).ToList();
@@ -870,8 +930,33 @@ namespace SevenwandsCompanion
             }
         }
 
-        private static bool GetExpanded(Dictionary<string, bool> state, string groupName)
-            => !state.TryGetValue(groupName, out var expanded) || expanded; // déplié par défaut
+        private static bool GetExpanded(Dictionary<string, bool> state, string groupName, bool defaultExpanded = true)
+            => state.TryGetValue(groupName, out var expanded) ? expanded : defaultExpanded;
+
+        private static string OrderGroupName(Order order)
+            => $"📋 {order.CustomerName} (#{order.Id}) — {order.Deadline:dd/MM}";
+
+        // Pour chaque commande en cours (par date de livraison), les manques en produits et
+        // ressources de TOUTE la chaîne de production, calculés pour cette commande seule.
+        private List<(Order Order, Dictionary<string, int> Missing)> ComputePerOrderMissing()
+        {
+            var stockByIngredientId = StockItems.ToDictionary(s => s.IngredientId, s => s.QuantityOwned);
+            var stockByPotionId = PotionProfits.Where(p => !p.IngredientId.HasValue).ToDictionary(p => p.PotionId, p => p.QuantityOwned);
+            var productRecipeByIngredientId = PotionProfits
+                .Where(p => p.IngredientId.HasValue)
+                .ToDictionary(p => p.IngredientId!.Value, p => p.ProductRecipe);
+
+            return _orders
+                .Where(o => !o.IsCompleted)
+                .OrderBy(o => o.Deadline)
+                .Select(o =>
+                {
+                    var (byPotion, byIngredient) = ComputePendingOrderDemand(new List<Order> { o });
+                    var missing = ComputeMissingProduction(_potions, productRecipeByIngredientId, _ingredientsDict, stockByIngredientId, stockByPotionId, byPotion, byIngredient);
+                    return (o, missing);
+                })
+                .ToList();
+        }
 
         private void OnIncrementStockClicked(object sender, EventArgs e)
         {
@@ -1127,10 +1212,15 @@ namespace SevenwandsCompanion
     // aucun item ne s'affiche, même un Label statique, alors que les données sont bien
     // présentes) — un ObservableCollection<string> de test rendait correctement dans le même
     // emplacement, isolant le problème au type générique lui-même.
+    // Une même classe de groupe sert aux accordéons par catégorie (Items) ET par commande
+    // (OrderEntries, IsOrderGroup = true) : le CollectionView n'a ainsi qu'un seul type de
+    // groupe à afficher, les commandes étant listées au-dessus des catégories.
     public class StockCategoryGroupViewModel : BindableObject
     {
         public string CategoryName { get; }
+        public bool IsOrderGroup { get; }
         public ObservableCollection<StockItemViewModel> Items { get; } = new();
+        public ObservableCollection<OrderStockEntryViewModel> OrderEntries { get; } = new();
 
         private bool _isExpanded;
         public bool IsExpanded
@@ -1143,11 +1233,16 @@ namespace SevenwandsCompanion
                     _isExpanded = value;
                     OnPropertyChanged();
                     OnPropertyChanged(nameof(HeaderText));
+                    OnPropertyChanged(nameof(ShowItems));
+                    OnPropertyChanged(nameof(ShowOrderEntries));
                 }
             }
         }
 
-        public string HeaderText => $"{(IsExpanded ? "▼" : "▶")} {CategoryName} ({Items.Count})";
+        public bool ShowItems => IsExpanded && !IsOrderGroup;
+        public bool ShowOrderEntries => IsExpanded && IsOrderGroup;
+
+        public string HeaderText => $"{(IsExpanded ? "▼" : "▶")} {CategoryName} ({(IsOrderGroup ? OrderEntries.Count : Items.Count)})";
 
         public StockCategoryGroupViewModel(string categoryName, IEnumerable<StockItemViewModel> items, bool isExpanded)
         {
@@ -1155,12 +1250,22 @@ namespace SevenwandsCompanion
             foreach (var item in items) Items.Add(item);
             _isExpanded = isExpanded;
         }
+
+        public StockCategoryGroupViewModel(string orderGroupName, IEnumerable<OrderStockEntryViewModel> entries, bool isExpanded, bool isOrderGroup)
+        {
+            CategoryName = orderGroupName;
+            IsOrderGroup = isOrderGroup;
+            foreach (var entry in entries) OrderEntries.Add(entry);
+            _isExpanded = isExpanded;
+        }
     }
 
     public class ProductCategoryGroupViewModel : BindableObject
     {
         public string CategoryName { get; }
+        public bool IsOrderGroup { get; }
         public ObservableCollection<PotionProfitViewModel> Items { get; } = new();
+        public ObservableCollection<OrderProductEntryViewModel> OrderEntries { get; } = new();
 
         private bool _isExpanded;
         public bool IsExpanded
@@ -1173,17 +1278,59 @@ namespace SevenwandsCompanion
                     _isExpanded = value;
                     OnPropertyChanged();
                     OnPropertyChanged(nameof(HeaderText));
+                    OnPropertyChanged(nameof(ShowItems));
+                    OnPropertyChanged(nameof(ShowOrderEntries));
                 }
             }
         }
 
-        public string HeaderText => $"{(IsExpanded ? "▼" : "▶")} {CategoryName} ({Items.Count})";
+        public bool ShowItems => IsExpanded && !IsOrderGroup;
+        public bool ShowOrderEntries => IsExpanded && IsOrderGroup;
+
+        public string HeaderText => $"{(IsExpanded ? "▼" : "▶")} {CategoryName} ({(IsOrderGroup ? OrderEntries.Count : Items.Count)})";
 
         public ProductCategoryGroupViewModel(string categoryName, IEnumerable<PotionProfitViewModel> items, bool isExpanded)
         {
             CategoryName = categoryName;
             foreach (var item in items) Items.Add(item);
             _isExpanded = isExpanded;
+        }
+
+        public ProductCategoryGroupViewModel(string orderGroupName, IEnumerable<OrderProductEntryViewModel> entries, bool isExpanded, bool isOrderGroup)
+        {
+            CategoryName = orderGroupName;
+            IsOrderGroup = isOrderGroup;
+            foreach (var entry in entries) OrderEntries.Add(entry);
+            _isExpanded = isExpanded;
+        }
+    }
+
+    // Une ligne d'un accordéon "commande" côté Ressources : la même instance StockItemViewModel
+    // que dans les accordéons par catégorie (Possédé +/- reste synchronisé), plus le manque
+    // propre à CETTE commande (calculé comme si elle était seule).
+    public class OrderStockEntryViewModel
+    {
+        public StockItemViewModel Item { get; }
+        public int Shortfall { get; }
+        public string ShortfallDisplay => $"⚠ Besoin: {GallyonsFormat.Format0(Shortfall)}";
+
+        public OrderStockEntryViewModel(StockItemViewModel item, int shortfall)
+        {
+            Item = item;
+            Shortfall = shortfall;
+        }
+    }
+
+    public class OrderProductEntryViewModel
+    {
+        public PotionProfitViewModel Item { get; }
+        public int Shortfall { get; }
+        public string ShortfallDisplay => $"⚠ Besoin: {GallyonsFormat.Format0(Shortfall)}";
+
+        public OrderProductEntryViewModel(PotionProfitViewModel item, int shortfall)
+        {
+            Item = item;
+            Shortfall = shortfall;
         }
     }
 
@@ -1293,7 +1440,7 @@ namespace SevenwandsCompanion
         }
 
         public bool HasShortfall => TotalShortfall > 0;
-        public string ShortfallDisplay => $"⚠ Manque: {GallyonsFormat.Format0(TotalShortfall)}";
+        public string ShortfallDisplay => $"⚠ Besoin: {GallyonsFormat.Format0(TotalShortfall)}";
     }
 
     // ViewModel pour une ligne de rentabilité de produit fini (potion, ou une Ressource marquée
@@ -1389,7 +1536,7 @@ namespace SevenwandsCompanion
                     for (int i = 0; i < ResourceRequirements.Count; i++)
                     {
                         var r = ResourceRequirements[i];
-                        string shortfallSuffix = r.AggregateShortfall > 0 ? $" (manque: {r.AggregateShortfall})" : "";
+                        string shortfallSuffix = r.AggregateShortfall > 0 ? $" (besoin: {r.AggregateShortfall})" : "";
                         formatted.Spans.Add(new Span
                         {
                             Text = $"{r.Name}: {r.Owned}/{r.NeededPerUnit}{shortfallSuffix}",

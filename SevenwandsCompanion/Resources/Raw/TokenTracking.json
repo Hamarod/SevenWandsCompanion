@@ -268,5 +268,113 @@
         "icon": "⚡"
       }
     ]
+  },
+  {
+    "year": 6,
+    "courses": [
+      {
+        "id": "y6-alchimie",
+        "name": "Alchimie - Botanique",
+        "currentPoints": 0,
+        "requiredPoints": 30,
+        "icon": "🌿"
+      },
+      {
+        "id": "y6-sorts",
+        "name": "Sorts",
+        "currentPoints": 0,
+        "requiredPoints": 20,
+        "icon": "✨"
+      },
+      {
+        "id": "y6-potions",
+        "name": "Potions",
+        "currentPoints": 0,
+        "requiredPoints": 15,
+        "icon": "🧪"
+      },
+      {
+        "id": "y6-histoire",
+        "name": "Histoire de la Magie",
+        "currentPoints": 0,
+        "requiredPoints": 40,
+        "icon": "📜"
+      },
+      {
+        "id": "y6-creatures",
+        "name": "Créatures Magiques",
+        "currentPoints": 0,
+        "requiredPoints": 35,
+        "icon": "🐉"
+      },
+      {
+        "id": "y6-club",
+        "name": "Club",
+        "currentPoints": 0,
+        "requiredPoints": 25,
+        "icon": "🏆"
+      },
+      {
+        "id": "y6-divers",
+        "name": "Divers",
+        "currentPoints": 0,
+        "requiredPoints": 35,
+        "icon": "⚡"
+      }
+    ]
+  },
+  {
+    "year": 7,
+    "courses": [
+      {
+        "id": "y7-alchimie",
+        "name": "Alchimie - Botanique",
+        "currentPoints": 0,
+        "requiredPoints": 30,
+        "icon": "🌿"
+      },
+      {
+        "id": "y7-sorts",
+        "name": "Sorts",
+        "currentPoints": 0,
+        "requiredPoints": 20,
+        "icon": "✨"
+      },
+      {
+        "id": "y7-potions",
+        "name": "Potions",
+        "currentPoints": 0,
+        "requiredPoints": 15,
+        "icon": "🧪"
+      },
+      {
+        "id": "y7-histoire",
+        "name": "Histoire de la Magie",
+        "currentPoints": 0,
+        "requiredPoints": 40,
+        "icon": "📜"
+      },
+      {
+        "id": "y7-creatures",
+        "name": "Créatures Magiques",
+        "currentPoints": 0,
+        "requiredPoints": 35,
+        "icon": "🐉"
+      },
+      {
+        "id": "y7-club",
+        "name": "Club",
+        "currentPoints": 0,
+        "requiredPoints": 25,
+        "icon": "🏆"
+      },
+      {
+        "id": "y7-divers",
+        "name": "Divers",
+        "currentPoints": 0,
+        "requiredPoints": 35,
+        "icon": "⚡"
+      }
+    ]
   }
 ]

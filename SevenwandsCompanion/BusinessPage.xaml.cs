@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using System.Collections.ObjectModel;
 using System.Globalization;
 using Microsoft.Maui.Graphics;
@@ -619,7 +620,13 @@ namespace SevenwandsCompanion
                 }
                 else if (ingredientsDict.TryGetValue(r.IngredientId, out var ing))
                 {
-                    if (productRecipeByIngredientId.TryGetValue(r.IngredientId, out var subRecipe) && subRecipe.Count > 0)
+                    // Prix global de la ressource en priorité ; à défaut, coût calculé depuis sa
+                    // propre recette si elle en a une (ressource-produit).
+                    if (ing.Price.HasValue)
+                    {
+                        cost += ing.Price.Value * r.Quantity;
+                    }
+                    else if (productRecipeByIngredientId.TryGetValue(r.IngredientId, out var subRecipe) && subRecipe.Count > 0)
                     {
                         string key = $"I:{r.IngredientId}";
                         if (visiting.Add(key))
@@ -627,10 +634,6 @@ namespace SevenwandsCompanion
                             cost += CalculateRecipeCost(subRecipe, ingredientsDict, potionsById, productRecipeByIngredientId, visiting) * r.Quantity;
                             visiting.Remove(key);
                         }
-                    }
-                    else if (ing.Price.HasValue)
-                    {
-                        cost += ing.Price.Value * r.Quantity;
                     }
                 }
             }
@@ -673,8 +676,7 @@ namespace SevenwandsCompanion
                     // ressource brute, Fabricable reste illimité).
                     int ownerMissing = missingProduction.TryGetValue($"I:{profit.IngredientId.Value}", out var t1) ? t1 : 0;
                     var ingRequirements = BuildResourceRequirements(profit.ProductRecipe, _ingredientsDict, stockByIngredientId, potionsById, stockByPotionId, ownerMissing);
-                    profit.MaxCraftable = ComputeMaxCraftable(ingRequirements);
-                    profit.ResourceRequirements = ingRequirements;
+                    ApplyRequirements(profit, ingRequirements);
                     continue;
                 }
 
@@ -683,8 +685,7 @@ namespace SevenwandsCompanion
 
                 int potionMissing = missingProduction.TryGetValue($"P:{potion.Id}", out var t2) ? t2 : 0;
                 var requirements = BuildResourceRequirements(potion.Recipe, _ingredientsDict, stockByIngredientId, potionsById, stockByPotionId, potionMissing);
-                profit.MaxCraftable = ComputeMaxCraftable(requirements);
-                profit.ResourceRequirements = requirements;
+                ApplyRequirements(profit, requirements);
             }
 
             foreach (var stockItem in StockItems)
@@ -694,6 +695,23 @@ namespace SevenwandsCompanion
 
             // Le nombre de commandes terminables dépend du stock : mise à jour en direct.
             OnPropertyChanged(nameof(OrdersButtonText));
+        }
+
+        // N'assigne que si le détail a réellement changé : évite de reconstruire le texte formaté
+        // et de rafraîchir les bindings de chaque produit à chaque +/- sur un stock sans rapport.
+        private static void ApplyRequirements(PotionProfitViewModel profit, List<ResourceRequirement> requirements)
+        {
+            var current = profit.ResourceRequirements;
+            bool same = current.Count == requirements.Count
+                && current.Zip(requirements).All(p =>
+                    p.First.Name == p.Second.Name
+                    && p.First.Owned == p.Second.Owned
+                    && p.First.NeededPerUnit == p.Second.NeededPerUnit
+                    && p.First.AggregateShortfall == p.Second.AggregateShortfall);
+            if (same) return;
+
+            profit.MaxCraftable = ComputeMaxCraftable(requirements);
+            profit.ResourceRequirements = requirements;
         }
 
         /// <summary>
@@ -792,9 +810,13 @@ namespace SevenwandsCompanion
                 bool hasExistingEntry = productResaleDataByIngredientId.TryGetValue(ingredient.Id, out var existingProductResale);
                 var productRecipe = hasExistingEntry ? existingProductResale!.ProductRecipe : new List<RecipeIngredient>();
 
-                float unitCost = productRecipe.Count > 0
-                    ? CalculateRecipeCost(productRecipe, _ingredientsDict, potionsById, productRecipeByIngredientId, new HashSet<string> { $"I:{ingredient.Id}" })
-                    : (ingredient.Price ?? 0);
+                // Prix global de la ressource en priorité (celui saisi côté Ressources) ; sinon
+                // calculé à partir de sa recette (comme pour un Potion), sinon 0.
+                float unitCost = ingredient.Price.HasValue
+                    ? ingredient.Price.Value
+                    : productRecipe.Count > 0
+                        ? CalculateRecipeCost(productRecipe, _ingredientsDict, potionsById, productRecipeByIngredientId, new HashSet<string> { $"I:{ingredient.Id}" })
+                        : 0;
 
                 int ingredientMissing = missingProduction.TryGetValue($"I:{ingredient.Id}", out var it) ? it : 0;
                 var requirements = BuildResourceRequirements(productRecipe, _ingredientsDict, stockByIngredientId, potionsById, stockByPotionId, ingredientMissing);
@@ -857,7 +879,7 @@ namespace SevenwandsCompanion
             // les accordéons "commande" affichés au-dessus des catégories.
             var perOrderMissing = ComputePerOrderMissing();
 
-            StockGroups.Clear();
+            var newStockGroups = new List<StockCategoryGroupViewModel>();
             foreach (var (order, missing) in perOrderMissing)
             {
                 var entries = stockList
@@ -868,7 +890,7 @@ namespace SevenwandsCompanion
                 if (entries.Any())
                 {
                     string name = OrderGroupName(order);
-                    StockGroups.Add(new StockCategoryGroupViewModel(
+                    newStockGroups.Add(new StockCategoryGroupViewModel(
                         name, entries, GetExpanded(_stockGroupExpanded, name, defaultExpanded: false), isOrderGroup: true));
                 }
             }
@@ -877,16 +899,18 @@ namespace SevenwandsCompanion
                 var itemsInCategory = stockList.Where(i => i.SelectedCategoryIds.Contains(category.Id)).ToList();
                 if (itemsInCategory.Any())
                 {
-                    StockGroups.Add(new StockCategoryGroupViewModel(
+                    newStockGroups.Add(new StockCategoryGroupViewModel(
                         category.Name, itemsInCategory, GetExpanded(_stockGroupExpanded, category.Name)));
                 }
             }
             var uncategorizedStock = stockList.Where(i => !i.SelectedCategoryIds.Any()).ToList();
             if (uncategorizedStock.Any())
             {
-                StockGroups.Add(new StockCategoryGroupViewModel(
+                newStockGroups.Add(new StockCategoryGroupViewModel(
                     UncategorizedGroupName, uncategorizedStock, GetExpanded(_stockGroupExpanded, UncategorizedGroupName)));
             }
+
+            SyncGroups(StockGroups, newStockGroups, g => g.Signature);
 
             IEnumerable<PotionProfitViewModel> products = PotionProfits
                 .Where(p => filterId == null || p.EffectiveCategoryIds.Contains(filterId.Value))
@@ -894,7 +918,7 @@ namespace SevenwandsCompanion
             if (SelectedProductSort != null) products = SelectedProductSort.Apply(products);
             var productsList = products.ToList();
 
-            ProductGroups.Clear();
+            var newProductGroups = new List<ProductCategoryGroupViewModel>();
             foreach (var (order, missing) in perOrderMissing)
             {
                 var entries = productsList
@@ -907,7 +931,7 @@ namespace SevenwandsCompanion
                 if (entries.Any())
                 {
                     string name = OrderGroupName(order);
-                    ProductGroups.Add(new ProductCategoryGroupViewModel(
+                    newProductGroups.Add(new ProductCategoryGroupViewModel(
                         name, entries, GetExpanded(_productGroupExpanded, name, defaultExpanded: false), isOrderGroup: true));
                 }
             }
@@ -916,7 +940,7 @@ namespace SevenwandsCompanion
                 var itemsInCategory = productsList.Where(p => p.EffectiveCategoryIds.Contains(category.Id)).ToList();
                 if (itemsInCategory.Any())
                 {
-                    ProductGroups.Add(new ProductCategoryGroupViewModel(
+                    newProductGroups.Add(new ProductCategoryGroupViewModel(
                         category.Name, itemsInCategory, GetExpanded(_productGroupExpanded, category.Name)));
                 }
             }
@@ -925,9 +949,30 @@ namespace SevenwandsCompanion
                 .ToList();
             if (uncategorizedProducts.Any())
             {
-                ProductGroups.Add(new ProductCategoryGroupViewModel(
+                newProductGroups.Add(new ProductCategoryGroupViewModel(
                     UncategorizedGroupName, uncategorizedProducts, GetExpanded(_productGroupExpanded, UncategorizedGroupName)));
             }
+
+            SyncGroups(ProductGroups, newProductGroups, g => g.Signature);
+        }
+
+        // Met à jour la collection affichée en ne remplaçant que les groupes dont le contenu a
+        // réellement changé (même signature = on garde l'instance déjà à l'écran) : un +/- ne
+        // reconstruit plus toute la liste, d'où une UI plus fluide et un focus conservé.
+        private static void SyncGroups<T>(ObservableCollection<T> shown, List<T> fresh, Func<T, string> signature)
+        {
+            for (int i = 0; i < fresh.Count; i++)
+            {
+                if (i < shown.Count)
+                {
+                    if (signature(shown[i]) != signature(fresh[i])) shown[i] = fresh[i];
+                }
+                else
+                {
+                    shown.Add(fresh[i]);
+                }
+            }
+            while (shown.Count > fresh.Count) shown.RemoveAt(shown.Count - 1);
         }
 
         private static bool GetExpanded(Dictionary<string, bool> state, string groupName, bool defaultExpanded = true)
@@ -956,6 +1001,20 @@ namespace SevenwandsCompanion
                     return (o, missing);
                 })
                 .ToList();
+        }
+
+        // Perte du focus (ou touche Entrée) d'un champ à saisie différée : applique tout de
+        // suite la valeur tapée.
+        private void OnDelayedEntryUnfocused(object? sender, FocusEventArgs e) => CommitEntry(sender);
+
+        private void OnDelayedEntryCompleted(object? sender, EventArgs e) => CommitEntry(sender);
+
+        private static void CommitEntry(object? sender)
+        {
+            if (sender is Entry entry && entry.BindingContext is IPendingEdit pending)
+            {
+                pending.CommitPendingEdit();
+            }
         }
 
         private void OnIncrementStockClicked(object sender, EventArgs e)
@@ -1212,11 +1271,16 @@ namespace SevenwandsCompanion
     // aucun item ne s'affiche, même un Label statique, alors que les données sont bien
     // présentes) — un ObservableCollection<string> de test rendait correctement dans le même
     // emplacement, isolant le problème au type générique lui-même.
-    // Une même classe de groupe sert aux accordéons par catégorie (Items) ET par commande
-    // (OrderEntries, IsOrderGroup = true) : le CollectionView n'a ainsi qu'un seul type de
-    // groupe à afficher, les commandes étant listées au-dessus des catégories.
+    // Performance : les éléments d'un groupe ne sont instanciés à l'écran (Items/OrderEntries,
+    // liés au BindableLayout) que lorsque le groupe est déplié - un BindableLayout crée sinon
+    // toutes ses lignes (champs, boutons...) même quand son conteneur est masqué. Les listes
+    // complètes restent en mémoire (_all*) pour le compteur de l'en-tête. Signature décrit le
+    // contenu du groupe pour que ApplyFilters ne remplace que les groupes réellement modifiés.
     public class StockCategoryGroupViewModel : BindableObject
     {
+        private readonly List<StockItemViewModel> _allItems = new();
+        private readonly List<OrderStockEntryViewModel> _allOrderEntries = new();
+
         public string CategoryName { get; }
         public bool IsOrderGroup { get; }
         public ObservableCollection<StockItemViewModel> Items { get; } = new();
@@ -1231,6 +1295,7 @@ namespace SevenwandsCompanion
                 if (_isExpanded != value)
                 {
                     _isExpanded = value;
+                    PopulateShownItems();
                     OnPropertyChanged();
                     OnPropertyChanged(nameof(HeaderText));
                     OnPropertyChanged(nameof(ShowItems));
@@ -1242,26 +1307,44 @@ namespace SevenwandsCompanion
         public bool ShowItems => IsExpanded && !IsOrderGroup;
         public bool ShowOrderEntries => IsExpanded && IsOrderGroup;
 
-        public string HeaderText => $"{(IsExpanded ? "▼" : "▶")} {CategoryName} ({(IsOrderGroup ? OrderEntries.Count : Items.Count)})";
+        public string HeaderText => $"{(IsExpanded ? "▼" : "▶")} {CategoryName} ({(IsOrderGroup ? _allOrderEntries.Count : _allItems.Count)})";
+
+        public string Signature => $"{CategoryName}|{IsExpanded}|" + (IsOrderGroup
+            ? string.Join(",", _allOrderEntries.Select(e => $"{RuntimeHelpers.GetHashCode(e.Item)}:{e.Shortfall}"))
+            : string.Join(",", _allItems.Select(i => RuntimeHelpers.GetHashCode(i))));
 
         public StockCategoryGroupViewModel(string categoryName, IEnumerable<StockItemViewModel> items, bool isExpanded)
         {
             CategoryName = categoryName;
-            foreach (var item in items) Items.Add(item);
+            _allItems.AddRange(items);
             _isExpanded = isExpanded;
+            PopulateShownItems();
         }
 
         public StockCategoryGroupViewModel(string orderGroupName, IEnumerable<OrderStockEntryViewModel> entries, bool isExpanded, bool isOrderGroup)
         {
             CategoryName = orderGroupName;
             IsOrderGroup = isOrderGroup;
-            foreach (var entry in entries) OrderEntries.Add(entry);
+            _allOrderEntries.AddRange(entries);
             _isExpanded = isExpanded;
+            PopulateShownItems();
+        }
+
+        private void PopulateShownItems()
+        {
+            Items.Clear();
+            OrderEntries.Clear();
+            if (!_isExpanded) return;
+            foreach (var item in _allItems) Items.Add(item);
+            foreach (var entry in _allOrderEntries) OrderEntries.Add(entry);
         }
     }
 
     public class ProductCategoryGroupViewModel : BindableObject
     {
+        private readonly List<PotionProfitViewModel> _allItems = new();
+        private readonly List<OrderProductEntryViewModel> _allOrderEntries = new();
+
         public string CategoryName { get; }
         public bool IsOrderGroup { get; }
         public ObservableCollection<PotionProfitViewModel> Items { get; } = new();
@@ -1276,6 +1359,7 @@ namespace SevenwandsCompanion
                 if (_isExpanded != value)
                 {
                     _isExpanded = value;
+                    PopulateShownItems();
                     OnPropertyChanged();
                     OnPropertyChanged(nameof(HeaderText));
                     OnPropertyChanged(nameof(ShowItems));
@@ -1287,28 +1371,43 @@ namespace SevenwandsCompanion
         public bool ShowItems => IsExpanded && !IsOrderGroup;
         public bool ShowOrderEntries => IsExpanded && IsOrderGroup;
 
-        public string HeaderText => $"{(IsExpanded ? "▼" : "▶")} {CategoryName} ({(IsOrderGroup ? OrderEntries.Count : Items.Count)})";
+        public string HeaderText => $"{(IsExpanded ? "▼" : "▶")} {CategoryName} ({(IsOrderGroup ? _allOrderEntries.Count : _allItems.Count)})";
+
+        public string Signature => $"{CategoryName}|{IsExpanded}|" + (IsOrderGroup
+            ? string.Join(",", _allOrderEntries.Select(e => $"{RuntimeHelpers.GetHashCode(e.Item)}:{e.Shortfall}"))
+            : string.Join(",", _allItems.Select(i => RuntimeHelpers.GetHashCode(i))));
 
         public ProductCategoryGroupViewModel(string categoryName, IEnumerable<PotionProfitViewModel> items, bool isExpanded)
         {
             CategoryName = categoryName;
-            foreach (var item in items) Items.Add(item);
+            _allItems.AddRange(items);
             _isExpanded = isExpanded;
+            PopulateShownItems();
         }
 
         public ProductCategoryGroupViewModel(string orderGroupName, IEnumerable<OrderProductEntryViewModel> entries, bool isExpanded, bool isOrderGroup)
         {
             CategoryName = orderGroupName;
             IsOrderGroup = isOrderGroup;
-            foreach (var entry in entries) OrderEntries.Add(entry);
+            _allOrderEntries.AddRange(entries);
             _isExpanded = isExpanded;
+            PopulateShownItems();
+        }
+
+        private void PopulateShownItems()
+        {
+            Items.Clear();
+            OrderEntries.Clear();
+            if (!_isExpanded) return;
+            foreach (var item in _allItems) Items.Add(item);
+            foreach (var entry in _allOrderEntries) OrderEntries.Add(entry);
         }
     }
 
     // Une ligne d'un accordéon "commande" côté Ressources : la même instance StockItemViewModel
     // que dans les accordéons par catégorie (Possédé +/- reste synchronisé), plus le manque
     // propre à CETTE commande (calculé comme si elle était seule).
-    public class OrderStockEntryViewModel
+    public class OrderStockEntryViewModel : IPendingEdit
     {
         public StockItemViewModel Item { get; }
         public int Shortfall { get; }
@@ -1319,9 +1418,11 @@ namespace SevenwandsCompanion
             Item = item;
             Shortfall = shortfall;
         }
+
+        public void CommitPendingEdit() => Item.CommitPendingEdit();
     }
 
-    public class OrderProductEntryViewModel
+    public class OrderProductEntryViewModel : IPendingEdit
     {
         public PotionProfitViewModel Item { get; }
         public int Shortfall { get; }
@@ -1332,6 +1433,82 @@ namespace SevenwandsCompanion
             Item = item;
             Shortfall = shortfall;
         }
+
+        public void CommitPendingEdit() => Item.CommitPendingEdit();
+    }
+
+    // Saisie différée d'un champ texte : pendant la frappe, le brouillon (Draft) est conservé tel
+    // quel (aucune notification, donc le champ n'est ni reformaté ni reconstruit) ; la valeur
+    // n'est appliquée qu'après un délai sans frappe (ou immédiatement via Commit, à la perte du
+    // focus). Évite que la mise à jour se déclenche en plein milieu d'un long nombre.
+    public sealed class DelayedTextCommit
+    {
+        private const int DefaultDelayMs = 1200;
+        private CancellationTokenSource? _cts;
+
+        public string? Draft { get; private set; }
+
+        public void Edit(string? text, Action<string> apply, Action refresh, int delayMs = DefaultDelayMs)
+        {
+            Draft = text ?? "";
+            _cts?.Cancel();
+            var cts = new CancellationTokenSource();
+            _cts = cts;
+            _ = CommitAfterDelayAsync(cts.Token, apply, refresh, delayMs);
+        }
+
+        private async Task CommitAfterDelayAsync(CancellationToken token, Action<string> apply, Action refresh, int delayMs)
+        {
+            try
+            {
+                await Task.Delay(delayMs, token);
+            }
+            catch (TaskCanceledException)
+            {
+                return;
+            }
+
+            if (token.IsCancellationRequested) return;
+            MainThread.BeginInvokeOnMainThread(() => Commit(apply, refresh));
+        }
+
+        public void Commit(Action<string> apply, Action refresh)
+        {
+            _cts?.Cancel();
+            if (Draft == null) return;
+
+            string text = Draft;
+            Draft = null;
+            apply(text);
+            refresh();
+        }
+
+        // Abandonne le brouillon en cours (la valeur a changé par un autre moyen, ex: bouton +/-).
+        public void Discard()
+        {
+            _cts?.Cancel();
+            Draft = null;
+        }
+
+        // Accepte "135 900", "135900", "12,5" ; vide = 0 ; texte invalide = false (valeur inchangée).
+        public static bool TryParseNumber(string? text, out double value)
+        {
+            string cleaned = (text ?? "")
+                .Replace(" ", "").Replace(" ", "").Replace(" ", "")
+                .Replace(',', '.');
+            if (cleaned.Length == 0)
+            {
+                value = 0;
+                return true;
+            }
+            return double.TryParse(cleaned, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out value);
+        }
+    }
+
+    // Implémenté par les lignes qui contiennent des champs à saisie différée.
+    public interface IPendingEdit
+    {
+        void CommitPendingEdit();
     }
 
     // Une catégorie assignable à cocher (utilisée par les écrans d'édition dédiés, ex:
@@ -1364,7 +1541,7 @@ namespace SevenwandsCompanion
     // ViewModel pour une ligne de stock d'ingrédient physique. L'assignation des catégories
     // se fait dans l'écran d'ajout/modification de la ressource (ResourceEditorPage) ; ici
     // on ne fait qu'afficher le résultat et suivre la quantité possédée.
-    public class StockItemViewModel : BindableObject
+    public class StockItemViewModel : BindableObject, IPendingEdit
     {
         public int IngredientId { get; set; }
         public string Name { get; set; } = "";
@@ -1412,11 +1589,30 @@ namespace SevenwandsCompanion
                 if (_quantityOwned != value)
                 {
                     _quantityOwned = value;
+                    _quantityEdit.Discard();
                     OnPropertyChanged();
+                    OnPropertyChanged(nameof(QuantityText));
                     QuantityChanged?.Invoke(this, EventArgs.Empty);
                 }
             }
         }
+
+        // Saisie au clavier de la quantité : appliquée seulement après une courte pause (ou à
+        // la perte du focus), pour ne pas déclencher recalculs/reconstruction des listes à
+        // chaque chiffre tapé. Les boutons +/- passent directement par QuantityOwned.
+        private readonly DelayedTextCommit _quantityEdit = new();
+        public string QuantityText
+        {
+            get => _quantityEdit.Draft ?? QuantityOwned.ToString();
+            set => _quantityEdit.Edit(value, ApplyQuantityText, () => OnPropertyChanged(nameof(QuantityText)));
+        }
+
+        private void ApplyQuantityText(string text)
+        {
+            if (DelayedTextCommit.TryParseNumber(text, out var parsed)) QuantityOwned = (int)Math.Round(parsed);
+        }
+
+        public void CommitPendingEdit() => _quantityEdit.Commit(ApplyQuantityText, () => OnPropertyChanged(nameof(QuantityText)));
 
         public event EventHandler? QuantityChanged;
 
@@ -1445,7 +1641,7 @@ namespace SevenwandsCompanion
 
     // ViewModel pour une ligne de rentabilité de produit fini (potion, ou une Ressource marquée
     // vendable directement comme produit - Type resourceAndProduct/ingredientAndResourceAndProduct).
-    public class PotionProfitViewModel : BindableObject
+    public class PotionProfitViewModel : BindableObject, IPendingEdit
     {
         public int PotionId { get; set; }
 
@@ -1484,6 +1680,7 @@ namespace SevenwandsCompanion
         private void OnLinkedStockQuantityChanged(object? sender, EventArgs e)
         {
             OnPropertyChanged(nameof(QuantityOwned));
+            OnPropertyChanged(nameof(QuantityText));
             OnPropertyChanged(nameof(TotalPotentialMargin));
             OnPropertyChanged(nameof(MarginSummary));
             QuantityChanged?.Invoke(this, EventArgs.Empty);
@@ -1588,7 +1785,9 @@ namespace SevenwandsCompanion
                 if (_resalePrice != value)
                 {
                     _resalePrice = value;
+                    _resalePriceEdit.Discard();
                     OnPropertyChanged();
+                    OnPropertyChanged(nameof(ResalePriceText));
                     OnPropertyChanged(nameof(MarginPerUnit));
                     OnPropertyChanged(nameof(TotalPotentialMargin));
                     OnPropertyChanged(nameof(MarginSummary));
@@ -1633,12 +1832,48 @@ namespace SevenwandsCompanion
                 if (_quantityOwned != value)
                 {
                     _quantityOwned = value;
+                    _quantityEdit.Discard();
                     OnPropertyChanged();
+                    OnPropertyChanged(nameof(QuantityText));
                     OnPropertyChanged(nameof(TotalPotentialMargin));
                     OnPropertyChanged(nameof(MarginSummary));
                     QuantityChanged?.Invoke(this, EventArgs.Empty);
                 }
             }
+        }
+
+        // Saisie au clavier différée (voir StockItemViewModel.QuantityText).
+        private readonly DelayedTextCommit _quantityEdit = new();
+        public string QuantityText
+        {
+            get => _quantityEdit.Draft ?? QuantityOwned.ToString();
+            set => _quantityEdit.Edit(value, ApplyQuantityText, () => OnPropertyChanged(nameof(QuantityText)));
+        }
+
+        private void ApplyQuantityText(string text)
+        {
+            if (DelayedTextCommit.TryParseNumber(text, out var parsed)) QuantityOwned = (int)Math.Round(parsed);
+        }
+
+        // Prix de revente saisi avec séparateur de milliers ("135 900") : le brouillon tapé reste
+        // intact pendant la saisie, la valeur n'est appliquée (et le champ reformaté) qu'après
+        // une courte pause ou à la perte du focus.
+        private readonly DelayedTextCommit _resalePriceEdit = new();
+        public string ResalePriceText
+        {
+            get => _resalePriceEdit.Draft ?? GallyonsFormat.Format0(ResalePrice);
+            set => _resalePriceEdit.Edit(value, ApplyResalePriceText, () => OnPropertyChanged(nameof(ResalePriceText)));
+        }
+
+        private void ApplyResalePriceText(string text)
+        {
+            if (DelayedTextCommit.TryParseNumber(text, out var parsed)) ResalePrice = (float)parsed;
+        }
+
+        public void CommitPendingEdit()
+        {
+            _quantityEdit.Commit(ApplyQuantityText, () => OnPropertyChanged(nameof(QuantityText)));
+            _resalePriceEdit.Commit(ApplyResalePriceText, () => OnPropertyChanged(nameof(ResalePriceText)));
         }
 
         public event EventHandler? CategoryChanged;

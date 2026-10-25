@@ -29,7 +29,10 @@ jobs:
     
     # Sur un tag vX.Y.Z.W, la version de l'exécutable est alignée sur le tag : c'est elle que
     # l'appli compare à la dernière release GitHub pour proposer la mise à jour automatique.
-    - name: Build SevenwandsCompanion for Windows
+    # Publication "self-contained" : le runtime .NET et le Windows App SDK sont inclus dans le
+    # dossier, l'utilisateur n'a rien à installer. UseMonoRuntime=false : le pack Mono win-x64
+    # n'existe pas pour .NET 10, on utilise CoreCLR.
+    - name: Publish SevenwandsCompanion for Windows (self-contained)
       shell: pwsh
       run: |
         $versionArgs = @()
@@ -37,13 +40,13 @@ jobs:
           $v = '${{ github.ref_name }}'.TrimStart('v')
           $versionArgs = @("-p:AssemblyVersion=$v", "-p:FileVersion=$v")
         }
-        dotnet build SevenwandsCompanion/SevenwandsCompanion.csproj -c Release -f net10.0-windows10.0.19041.0 @versionArgs
-    
-    # 1. On compresse le dossier de build en un seul fichier ZIP
+        dotnet publish SevenwandsCompanion/SevenwandsCompanion.csproj -c Release -f net10.0-windows10.0.19041.0 -r win-x64 --self-contained true -p:UseMonoRuntime=false -p:WindowsPackageType=None -p:WindowsAppSDKSelfContained=true -p:PublishTrimmed=false -o publish/windows @versionArgs
+
+    # 1. On compresse le dossier publié en un seul fichier ZIP
     - name: Zip Windows Build
       shell: pwsh
       run: |
-        Compress-Archive -Path SevenwandsCompanion/bin/Release/net10.0-windows10.0.19041.0/* -DestinationPath SevenwandsCompanion_Windows.zip
+        Compress-Archive -Path publish/windows/* -DestinationPath SevenwandsCompanion_Windows.zip
 
     # 2. On upload l'artefact (optionnel, pour l'onglet Actions)
     - name: Upload Windows Build Artifacts

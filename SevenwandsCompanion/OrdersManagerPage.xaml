@@ -90,7 +90,21 @@
                                 </DataTrigger>
                             </Grid.Triggers>
 
-                            <Grid ColumnDefinitions="*, Auto" RowDefinitions="Auto, Auto, Auto, Auto" RowSpacing="6">
+                            <!-- Ligne d'en-tête "Commandes terminées (N)" : dépliable à volonté. -->
+                            <Grid IsVisible="{Binding IsSectionHeader}"
+                                  BackgroundColor="{StaticResource BackgroundCard}"
+                                  Padding="14,10">
+                                <Label Text="{Binding CustomerName}"
+                                       TextColor="{StaticResource AccentGold}"
+                                       FontAttributes="Bold"
+                                       FontSize="14"
+                                       HorizontalOptions="Start"/>
+                                <Grid.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnToggleCompletedTapped"/>
+                                </Grid.GestureRecognizers>
+                            </Grid>
+
+                            <Grid ColumnDefinitions="*, Auto" RowDefinitions="Auto, Auto, Auto, Auto" RowSpacing="6" IsVisible="{Binding IsOrderRow}">
                                 <Label Grid.Row="0" Grid.Column="0"
                                        Text="{Binding CustomerName}"
                                        TextColor="{StaticResource TextPrimary}"

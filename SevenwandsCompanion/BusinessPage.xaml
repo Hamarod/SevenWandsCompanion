@@ -142,7 +142,7 @@
                                                                 CornerRadius="6"
                                                                 CommandParameter="{Binding Item}"
                                                                 Clicked="OnDecrementStockClicked"/>
-                                                        <Entry Text="{Binding Item.QuantityOwned}"
+                                                        <Entry Text="{Binding Item.QuantityText}" Unfocused="OnDelayedEntryUnfocused" Completed="OnDelayedEntryCompleted"
                                                                Keyboard="Numeric"
                                                                WidthRequest="55"
                                                                HorizontalTextAlignment="Center"
@@ -205,7 +205,7 @@
                                                                 CornerRadius="6"
                                                                 CommandParameter="{Binding .}"
                                                                 Clicked="OnDecrementStockClicked"/>
-                                                        <Entry Text="{Binding QuantityOwned}"
+                                                        <Entry Text="{Binding QuantityText}" Unfocused="OnDelayedEntryUnfocused" Completed="OnDelayedEntryCompleted"
                                                                Keyboard="Numeric"
                                                                WidthRequest="55"
                                                                HorizontalTextAlignment="Center"
@@ -334,7 +334,7 @@
                                                                 CornerRadius="6"
                                                                 CommandParameter="{Binding Item}"
                                                                 Clicked="OnDecrementProductClicked"/>
-                                                        <Entry Text="{Binding Item.QuantityOwned}"
+                                                        <Entry Text="{Binding Item.QuantityText}" Unfocused="OnDelayedEntryUnfocused" Completed="OnDelayedEntryCompleted"
                                                                Keyboard="Numeric"
                                                                WidthRequest="55"
                                                                HorizontalTextAlignment="Center"
@@ -405,7 +405,7 @@
                                                                     CornerRadius="6"
                                                                     CommandParameter="{Binding .}"
                                                                     Clicked="OnDecrementProductClicked"/>
-                                                            <Entry Text="{Binding QuantityOwned}"
+                                                            <Entry Text="{Binding QuantityText}" Unfocused="OnDelayedEntryUnfocused" Completed="OnDelayedEntryCompleted"
                                                                    Keyboard="Numeric"
                                                                    WidthRequest="55"
                                                                    HorizontalTextAlignment="Center"
@@ -431,9 +431,9 @@
                                                                FontSize="12"
                                                                VerticalOptions="Center"/>
                                                         <Entry Grid.Column="1"
-                                                               Text="{Binding ResalePrice}"
+                                                               Text="{Binding ResalePriceText}" Unfocused="OnDelayedEntryUnfocused" Completed="OnDelayedEntryCompleted"
                                                                Keyboard="Numeric"
-                                                               WidthRequest="90"
+                                                               WidthRequest="110"
                                                                Style="{StaticResource EntryStyle}"/>
                                                         <Label Grid.Column="2"
                                                                Text="{Binding MarginSummary}"

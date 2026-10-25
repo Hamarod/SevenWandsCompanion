@@ -42,11 +42,14 @@ namespace SevenwandsCompanion
             get => _selectedOrder;
             set
             {
+                // L'en-tête "Commandes terminées" n'est pas une vraie commande : non sélectionnable.
+                if (value?.IsSectionHeader == true) value = null;
+
                 if (_selectedOrder != value)
                 {
                     _selectedOrder = value;
-                    OnPropertyChanged();
                 }
+                OnPropertyChanged();
             }
         }
 
@@ -109,9 +112,39 @@ namespace SevenwandsCompanion
         {
             IEnumerable<OrderViewModel> ordered = _allOrders;
             if (SelectedSort != null) ordered = SelectedSort.Apply(ordered);
+            var orderedList = ordered.ToList();
+
+            // Commandes en cours d'abord ; les terminées toujours à la fin, derrière une ligne
+            // d'en-tête dépliable (repliée par défaut) pour les afficher à volonté.
+            var pending = orderedList.Where(o => !o.IsCompleted).ToList();
+            var completed = orderedList.Where(o => o.IsCompleted).ToList();
 
             Orders.Clear();
-            foreach (var order in ordered) Orders.Add(order);
+            foreach (var order in pending) Orders.Add(order);
+
+            if (completed.Count > 0)
+            {
+                Orders.Add(new OrderViewModel
+                {
+                    IsSectionHeader = true,
+                    CustomerName = $"{(_showCompleted ? "▼" : "▶")} Commandes terminées ({completed.Count})"
+                });
+
+                if (_showCompleted)
+                {
+                    foreach (var order in completed) Orders.Add(order);
+                }
+            }
+        }
+
+        private bool _showCompleted;
+
+        // Tap sur l'en-tête "Commandes terminées" : affiche/masque la liste des terminées.
+        // (Label/Grid + tap plutôt qu'un Button : voir le bug WinUI documenté plus bas.)
+        private void OnToggleCompletedTapped(object? sender, TappedEventArgs e)
+        {
+            _showCompleted = !_showCompleted;
+            ApplySort();
         }
 
         private OrderViewModel BuildOrderViewModel(Order order)
@@ -261,6 +294,12 @@ namespace SevenwandsCompanion
     public class OrderViewModel
     {
         public int Id { get; set; }
+
+        // Ligne d'en-tête de section ("Commandes terminées (N)") insérée dans la liste : le
+        // texte est porté par CustomerName, le reste de la ligne n'est pas affiché.
+        public bool IsSectionHeader { get; set; }
+        public bool IsOrderRow => !IsSectionHeader;
+
         public string CustomerName { get; set; } = "";
         public List<OrderItem> Items { get; set; } = new();
         public float NegotiatedPrice { get; set; }
